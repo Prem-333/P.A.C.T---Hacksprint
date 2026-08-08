@@ -65,7 +65,7 @@ export default function DashboardPage() {
       return;
     }
     try {
-      const token = cookie.split("=")[1];
+      const token = cookie.substring("pbr_session=".length);
       const data = JSON.parse(atob(token)) as UserSession;
       setUser(data);
       setIsLoading(false);
