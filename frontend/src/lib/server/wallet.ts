@@ -16,6 +16,7 @@ import {
   parseEther,
   keccak256,
   encodePacked,
+  decodeErrorResult,
 } from "viem";
 import { hardhat } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
@@ -215,6 +216,41 @@ export async function getAllEscrows() {
   return escrows;
 }
 
+/** Gets fee configuration (tax and vendor fee BPS). */
+export async function getFeeConfig() {
+  const [taxBps, vendorFeeBps] = await Promise.all([
+    publicClient.readContract({
+      address: PBR_CONTRACT_ADDRESS,
+      abi: PBR_ABI,
+      functionName: "taxBps",
+    }),
+    publicClient.readContract({
+      address: PBR_CONTRACT_ADDRESS,
+      abi: PBR_ABI,
+      functionName: "vendorFeeBps",
+    }),
+  ]);
+  return {
+    taxBps: Number(taxBps),
+    vendorFeeBps: Number(vendorFeeBps),
+  };
+}
+
+/** Calculates fee distribution for a given amount. */
+export async function calculateFees(amountRaw: string) {
+  const [tax, vendor, merchant] = await publicClient.readContract({
+    address: PBR_CONTRACT_ADDRESS,
+    abi: PBR_ABI,
+    functionName: "calculateFees",
+    args: [BigInt(amountRaw)],
+  }) as [bigint, bigint, bigint];
+  return {
+    taxAmount: formatEther(tax),
+    vendorFeeAmount: formatEther(vendor),
+    merchantAmount: formatEther(merchant),
+  };
+}
+
 // ──────────────────────────────────────────────
 //  Contract Write Operations
 // ──────────────────────────────────────────────
@@ -305,4 +341,58 @@ export function resolveAddressName(address: string): string {
   }
   if (lower === PBR_CONTRACT_ADDRESS.toLowerCase()) return "Escrow Contract";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+/** Parses Viem contract errors into user-friendly messages. */
+export function parseContractError(error: any): string {
+  if (error.name === "ContractFunctionExecutionError") {
+    try {
+      // Decode the custom error signature using our ABI
+      const decoded = decodeErrorResult({
+        abi: PBR_ABI,
+        data: error.cause?.data || error.data,
+      });
+
+      switch (decoded.errorName as string) {
+        case "PurposeBoundTransferViolation":
+          return "Purpose-bound restriction: You can only send funds to authorized merchants or the escrow contract.";
+        case "SellerNotAuthorizedMerchant":
+          return "The recipient is not an authorized merchant.";
+        case "EscrowAmountZero":
+          return "Amount must be greater than zero.";
+        case "LockDurationZero":
+          return "Lock duration must be greater than zero.";
+        case "EscrowNotFound":
+          return `Escrow #${(decoded as any).args?.[0]} does not exist.`;
+        case "EscrowAlreadyCompleted":
+          return "This escrow has already been completed.";
+        case "EscrowAlreadyRefunded":
+          return "This escrow has already been refunded.";
+        case "NotEscrowBuyer":
+          return "Only the buyer can perform this action.";
+        case "NotEscrowSeller":
+          return "Only the merchant can confirm delivery.";
+        case "InvalidDeliveryProof":
+          return "Delivery proof does not match the expected phrase.";
+        case "EscrowNotExpired":
+          const deadline = Number((decoded as any).args?.[1]);
+          const date = new Date(deadline * 1000).toLocaleString();
+          return `Escrow has not expired yet. Deadline is ${date}.`;
+        case "CannotEscrowToSelf":
+          return "You cannot create an escrow with yourself.";
+        // Standard ERC20 errors
+        case "ERC20InsufficientBalance":
+          return `Insufficient balance (Tried to send ${formatEther((decoded as any).args?.[2] as bigint)} PBR but you only have ${formatEther((decoded as any).args?.[1] as bigint)} PBR).`;
+        case "ERC20InvalidReceiver":
+          return "Invalid recipient address.";
+        default:
+          return `Contract error: ${decoded.errorName}`;
+      }
+    } catch (e) {
+      console.warn("Failed to decode contract error:", e);
+    }
+  }
+
+  // Fallback
+  return error.shortMessage || error.message || "An unknown blockchain error occurred";
 }

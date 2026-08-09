@@ -18,7 +18,7 @@ import type { Address } from "@/types";
  * UPDATE THIS after running `npx hardhat run scripts/deploy.ts --network localhost`.
  */
 export const PBR_CONTRACT_ADDRESS: Address =
-  "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707" as Address;
+  "0x610178dA211FEF7D417bC0e6FeD39F05609AD788" as Address;
 
 // ──────────────────────────────────────────────
 //  Role Constants (pre-computed keccak256 hashes)
@@ -154,6 +154,45 @@ export const PBR_ABI = [
     outputs: [{ name: "", type: "bytes32" }],
     stateMutability: "view",
   },
+  {
+    type: "function",
+    name: "calculateFees",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: [
+      { name: "taxAmount", type: "uint256" },
+      { name: "vendorFeeAmount", type: "uint256" },
+      { name: "merchantAmount", type: "uint256" },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "taxCollector",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "vendorFeeCollector",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "taxBps",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "vendorFeeBps",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
 
   // ── Write Functions ──────────────────────────
   {
@@ -203,6 +242,18 @@ export const PBR_ABI = [
     inputs: [
       { name: "account", type: "address" },
       { name: "status", type: "bool" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setFeeConfig",
+    inputs: [
+      { name: "_taxCollector", type: "address" },
+      { name: "_taxBps", type: "uint256" },
+      { name: "_vendorFeeCollector", type: "address" },
+      { name: "_vendorFeeBps", type: "uint256" },
     ],
     outputs: [],
     stateMutability: "nonpayable",
@@ -299,6 +350,16 @@ export const PBR_ABI = [
   },
   {
     type: "event",
+    name: "FeeDistributed",
+    inputs: [
+      { name: "escrowId", type: "uint256", indexed: true },
+      { name: "taxAmount", type: "uint256", indexed: false },
+      { name: "vendorFeeAmount", type: "uint256", indexed: false },
+      { name: "merchantAmount", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
     name: "EscrowRefunded",
     inputs: [
       { name: "escrowId", type: "uint256", indexed: true },
@@ -331,5 +392,79 @@ export const PBR_ABI = [
       { name: "account", type: "address", indexed: true },
       { name: "sender", type: "address", indexed: true },
     ],
+  },
+  
+  // ── Errors ──────────────────────────────────
+  {
+    type: "error",
+    name: "PurposeBoundTransferViolation",
+    inputs: [
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+    ],
+  },
+  {
+    type: "error",
+    name: "SellerNotAuthorizedMerchant",
+    inputs: [{ name: "seller", type: "address" }],
+  },
+  {
+    type: "error",
+    name: "EscrowAmountZero",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "LockDurationZero",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "EscrowNotFound",
+    inputs: [{ name: "escrowId", type: "uint256" }],
+  },
+  {
+    type: "error",
+    name: "EscrowAlreadyCompleted",
+    inputs: [{ name: "escrowId", type: "uint256" }],
+  },
+  {
+    type: "error",
+    name: "EscrowAlreadyRefunded",
+    inputs: [{ name: "escrowId", type: "uint256" }],
+  },
+  {
+    type: "error",
+    name: "NotEscrowBuyer",
+    inputs: [
+      { name: "escrowId", type: "uint256" },
+      { name: "caller", type: "address" },
+    ],
+  },
+  {
+    type: "error",
+    name: "NotEscrowSeller",
+    inputs: [
+      { name: "escrowId", type: "uint256" },
+      { name: "caller", type: "address" },
+    ],
+  },
+  {
+    type: "error",
+    name: "InvalidDeliveryProof",
+    inputs: [{ name: "escrowId", type: "uint256" }],
+  },
+  {
+    type: "error",
+    name: "EscrowNotExpired",
+    inputs: [
+      { name: "escrowId", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+    ],
+  },
+  {
+    type: "error",
+    name: "CannotEscrowToSelf",
+    inputs: [],
   },
 ] as const;
