@@ -57,6 +57,22 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
     uint256 public activeEscrowCount;
 
     // ──────────────────────────────────────────────
+    //  Fee Configuration
+    // ──────────────────────────────────────────────
+
+    /// @notice Address receiving platform tax (e.g., government/central entity).
+    address public taxCollector;
+
+    /// @notice Address receiving vendor fees (e.g., supply chain platform).
+    address public vendorFeeCollector;
+
+    /// @notice Tax percentage in basis points (e.g., 200 = 2%).
+    uint256 public taxBps;
+
+    /// @notice Vendor fee percentage in basis points (e.g., 100 = 1%).
+    uint256 public vendorFeeBps;
+
+    // ──────────────────────────────────────────────
     //  Events
     // ──────────────────────────────────────────────
 
@@ -75,6 +91,14 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         uint256 indexed escrowId,
         address indexed seller,
         uint256 amount
+    );
+
+    /// @notice Emitted when fees are distributed during escrow settlement.
+    event FeeDistributed(
+        uint256 indexed escrowId,
+        uint256 taxAmount,
+        uint256 vendorFeeAmount,
+        uint256 merchantAmount
     );
 
     /// @notice Emitted when an expired escrow is refunded to the buyer.
@@ -169,6 +193,27 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
     function setPurposeBound(address account, bool status) external onlyRole(CENTRAL_AUTHORITY) {
         purposeBound[account] = status;
         emit PurposeBoundStatusChanged(account, status);
+    }
+
+    /**
+     * @notice Sets the fee configuration for escrow settlements.
+     * @dev Only callable by the CENTRAL_AUTHORITY role. Total BPS must not exceed 10000 (100%).
+     * @param _taxCollector Address to receive tax.
+     * @param _taxBps Tax rate in basis points.
+     * @param _vendorFeeCollector Address to receive vendor fees.
+     * @param _vendorFeeBps Vendor fee rate in basis points.
+     */
+    function setFeeConfig(
+        address _taxCollector,
+        uint256 _taxBps,
+        address _vendorFeeCollector,
+        uint256 _vendorFeeBps
+    ) external onlyRole(CENTRAL_AUTHORITY) {
+        require(_taxBps + _vendorFeeBps <= 10000, "Total fees cannot exceed 100%");
+        taxCollector = _taxCollector;
+        taxBps = _taxBps;
+        vendorFeeCollector = _vendorFeeCollector;
+        vendorFeeBps = _vendorFeeBps;
     }
 
     // ──────────────────────────────────────────────
@@ -282,10 +327,20 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         escrow.isCompleted = true;
         activeEscrowCount--;
 
-        // Release funds from contract to seller
-        _transfer(address(this), escrow.seller, escrow.amount);
+        // Calculate fee split
+        (uint256 taxAmount, uint256 vendorFeeAmount, uint256 merchantAmount) = calculateFees(escrow.amount);
 
-        emit DeliveryConfirmed(escrowId, escrow.seller, escrow.amount);
+        // Distribute funds
+        if (taxAmount > 0 && taxCollector != address(0)) {
+            _transfer(address(this), taxCollector, taxAmount);
+        }
+        if (vendorFeeAmount > 0 && vendorFeeCollector != address(0)) {
+            _transfer(address(this), vendorFeeCollector, vendorFeeAmount);
+        }
+        _transfer(address(this), escrow.seller, merchantAmount);
+
+        emit FeeDistributed(escrowId, taxAmount, vendorFeeAmount, merchantAmount);
+        emit DeliveryConfirmed(escrowId, escrow.seller, merchantAmount);
     }
 
     /**
@@ -354,6 +409,28 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
             e.isCompleted,
             e.isRefunded
         );
+    }
+
+    /**
+     * @notice Calculates the fee split for a given amount.
+     * @param amount The total escrow amount.
+     * @return taxAmount The amount allocated to tax.
+     * @return vendorFeeAmount The amount allocated to the vendor fee.
+     * @return merchantAmount The net amount remaining for the merchant.
+     */
+    function calculateFees(uint256 amount)
+        public
+        view
+        returns (
+            uint256 taxAmount,
+            uint256 vendorFeeAmount,
+            uint256 merchantAmount
+        )
+    {
+        taxAmount = (amount * taxBps) / 10000;
+        vendorFeeAmount = (amount * vendorFeeBps) / 10000;
+        merchantAmount = amount - taxAmount - vendorFeeAmount;
+        return (taxAmount, vendorFeeAmount, merchantAmount);
     }
 
     // ──────────────────────────────────────────────

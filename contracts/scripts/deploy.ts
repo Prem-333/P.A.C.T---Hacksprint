@@ -51,6 +51,11 @@ async function main() {
   await pb1.wait();
   console.log("  ✅ Purpose-bound ON → Bharath:  ", buyer.address);
 
+  // Set fee configuration (2% tax to Admin, 1% fee to Vendor/Kanish)
+  const setFee = await token.setFeeConfig(admin.address, 200, vendor.address, 100);
+  await setFee.wait();
+  console.log("  ✅ Fee Configured → 2% Tax (Admin), 1% Platform Fee (Kanish)");
+
   console.log("");
   console.log("┌──────────────────────────────────────────────────────────┐");
   console.log("│  USER CREDENTIALS                                      │");
