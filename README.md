@@ -1,61 +1,88 @@
-# Purpose-Bound Rupee — Enterprise Digital Payment Platform
+# P.A.C.T. — Purpose-Bound Automated Compliance Token
 
-> **MVP v1.0** — A Purpose-Bound Token system for automated B2B industrial procurement,
-> implementing programmable compliance, atomic DvP escrow settlement, and ISO 20022
-> financial messaging standards for Sago & Textile MSME supply chains.
+> **A programmable B2B payment infrastructure for Indian MSME supply chains.**
+> Implements purpose-bound digital rupee transfers, atomic DvP escrow settlement with automatic fee splitting, and ISO 20022 financial messaging — all on a local EVM blockchain.
 
 ---
 
-## Architecture
+## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    FRONTEND (Next.js + Wagmi)                   │
-│  ┌───────────┐  ┌───────────────┐  ┌────────────────────────┐  │
-│  │ Treasury  │  │  MSME Buyer   │  │  Merchant Supplier     │  │
-│  │   View    │  │    View       │  │      View              │  │
-│  └─────┬─────┘  └──────┬────────┘  └──────────┬─────────────┘  │
-│        │               │                      │                │
-│  ┌─────┴───────────────┴──────────────────────┴─────────────┐  │
-│  │              Viem (readContract / writeContract)          │  │
-│  └──────────────────────────┬────────────────────────────────┘  │
-│                             │                                   │
-│  ┌──────────────────────────┴────────────────────────────────┐  │
-│  │           ISO 20022 pacs.008 Metadata Mapper              │  │
-│  └───────────────────────────────────────────────────────────┘  │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │ JSON-RPC (localhost:8545)
-┌─────────────────────────────┴───────────────────────────────────┐
-│                 SMART CONTRACT (Hardhat/EVM)                    │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │              PurposeBoundRupee.sol                        │  │
-│  │  ┌─────────┐ ┌──────────┐ ┌────────────┐ ┌───────────┐  │  │
-│  │  │  ERC20  │ │ Ownable  │ │AccessCtrl  │ │Reentrancy │  │  │
-│  │  │ (Token) │ │  (Admin) │ │  (Roles)   │ │  Guard    │  │  │
-│  │  └─────────┘ └──────────┘ └────────────┘ └───────────┘  │  │
-│  │                                                           │  │
-│  │  Features: Purpose-Bound Transfers · DvP Escrow          │  │
-│  └───────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│                    FRONTEND (Next.js 16 App Router)                │
+│                                                                    │
+│  ┌──────────────┐  ┌───────────────┐  ┌────────────────────────┐  │
+│  │  Bharath      │  │  Prem          │  │  Kanish                │  │
+│  │  (Client)     │  │  (Merchant)    │  │  (Vendor / Observer)   │  │
+│  │  Create       │  │  Confirm       │  │  Live Feed, Audit,     │  │
+│  │  Escrows      │  │  Deliveries    │  │  All Balances          │  │
+│  └──────┬───────┘  └───────┬────────┘  └──────────┬─────────────┘  │
+│         │                  │                       │               │
+│  ┌──────┴──────────────────┴───────────────────────┴────────────┐  │
+│  │         Toast Notifications  ·  EscrowTimeline              │  │
+│  │         FeeBreakdown  ·  LiveActivityFeed  ·  SVG Icons     │  │
+│  └─────────────────────────┬───────────────────────────────────┘  │
+│                            │                                      │
+│  ┌─────────────────────────┴───────────────────────────────────┐  │
+│  │              Next.js API Routes (Server-Side Signing)       │  │
+│  │    /api/escrow/create · /api/escrow/confirm · /api/balance  │  │
+│  │    /api/escrow/refund · /api/escrow/list · /api/transactions│  │
+│  └─────────────────────────┬───────────────────────────────────┘  │
+│                            │                                      │
+│  ┌─────────────────────────┴───────────────────────────────────┐  │
+│  │   Viem Custodial Wallet Clients (per-role signing)          │  │
+│  │   + parseContractError (human-readable revert decoding)     │  │
+│  └─────────────────────────┬───────────────────────────────────┘  │
+└────────────────────────────┬──────────────────────────────────────┘
+                             │ JSON-RPC (localhost:8545)
+┌────────────────────────────┴──────────────────────────────────────┐
+│                   SMART CONTRACT (Hardhat / EVM)                  │
+│  ┌──────────────────────────────────────────────────────────────┐ │
+│  │                PurposeBoundRupee.sol                         │ │
+│  │  ┌─────────┐ ┌──────────┐ ┌────────────┐ ┌──────────────┐  │ │
+│  │  │  ERC20  │ │ Ownable  │ │AccessCtrl  │ │ReentrancyGrd │  │ │
+│  │  │ (Token) │ │  (Admin) │ │  (Roles)   │ │   (Safety)   │  │ │
+│  │  └─────────┘ └──────────┘ └────────────┘ └──────────────┘  │ │
+│  │                                                              │ │
+│  │  Purpose-Bound Transfers · DvP Escrow · Atomic Fee Split    │ │
+│  │  Tax (2%) → Admin  ·  Vendor Fee (1%) → Kanish              │ │
+│  │  Remaining (97%) → Merchant (Prem)                           │ │
+│  └──────────────────────────────────────────────────────────────┘ │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Smart Contracts | Solidity 0.8.24 + OpenZeppelin v5.1 |
-| Local Blockchain | Hardhat (chainId: 31337) |
-| Frontend | Next.js 15 (App Router) + TypeScript |
-| Web3 Middleware | Viem 2.x + Wagmi v2 |
-| Styling | Tailwind CSS v4 |
-| Data Layer | ISO 20022 pacs.008.001.08 simulation |
+| Layer              | Technology                                   |
+|--------------------|----------------------------------------------|
+| Smart Contracts    | Solidity 0.8.24 + OpenZeppelin v5.1          |
+| Local Blockchain   | Hardhat (chainId: 31337)                     |
+| Frontend           | Next.js 16 (App Router) + TypeScript         |
+| Web3 Middleware    | Viem 2.x (server-side custodial signing)     |
+| Styling            | Tailwind CSS v4 + Glassmorphism design       |
+| Icons              | Custom Lucide-style SVG icon library         |
+| Data Layer         | ISO 20022 pacs.008.001.08 simulation         |
+| Notifications      | Custom Toast provider (success/error/info)   |
+
+## Key Features
+
+- **Purpose-Bound Transfers** — Buyer tokens can only flow to authorized merchants or the escrow contract. Any other transfer reverts.
+- **DvP Escrow** — Buyer locks funds in a smart contract escrow. Merchant confirms delivery with a proof phrase to release.
+- **Automatic Fee Splitting** — On settlement, the contract atomically deducts a 2% platform tax and 1% vendor fee before releasing the remainder to the merchant.
+- **Human-Readable Error Handling** — Contract revert signatures (e.g., `0x3f93e5e5`) are decoded into plain English via `parseContractError`.
+- **Escrow Timeline** — Visual progress tracker showing Created → In Transit → Settled/Refunded.
+- **Fee Breakdown Preview** — Merchants see a live settlement preview (Gross → Tax → Vendor Fee → Net).
+- **Live Activity Feed** — The Vendor dashboard streams color-coded, icon-tagged network events in real time.
+- **Role-Based Access** — Three demo users with distinct dashboards and capabilities.
 
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js >= 18
 - npm >= 9
-- MetaMask browser extension
+
+> **No MetaMask required.** All signing is handled server-side using Hardhat test keys.
 
 ### 1. Install Dependencies
 
@@ -76,7 +103,7 @@ cd contracts
 npx hardhat node
 ```
 
-This starts a local EVM node at `http://127.0.0.1:8545` with 20 pre-funded accounts.
+This starts a local EVM node at `http://127.0.0.1:8545` with 20 pre-funded test accounts.
 
 ### 3. Deploy Contracts
 
@@ -88,26 +115,16 @@ npx hardhat run scripts/deploy.ts --network localhost
 ```
 
 The deploy script will:
-- Deploy `PurposeBoundRupee` contract
-- Grant `AUTHORIZED_MERCHANT` role to Account #1
-- Mint 10,000 PBR to Account #2 (buyer)
-- Enable purpose-bound restrictions on Account #2
+- Deploy the `PurposeBoundRupee` contract
+- Grant `AUTHORIZED_MERCHANT` role to Prem (Account #1)
+- Mint 10,000 PBR to Bharath (Account #2)
+- Enable purpose-bound restrictions on Bharath
+- Configure fee rates: 2% tax, 1% vendor fee
+- Set Kanish (Account #3) as the vendor fee recipient
 
-**Note the contract address** printed in the output — if it differs from the default, update `PBR_CONTRACT_ADDRESS` in `frontend/src/lib/contracts.ts`.
+**Note the contract address** — if it differs from the default, update `PBR_CONTRACT_ADDRESS` in `frontend/src/lib/contracts.ts`.
 
-### 4. Configure MetaMask
-
-1. Add a custom network:
-   - **RPC URL**: `http://127.0.0.1:8545`
-   - **Chain ID**: `31337`
-   - **Currency Symbol**: `ETH`
-
-2. Import test accounts (private keys from Hardhat node output):
-   - Account #0 → Central Authority (admin)
-   - Account #1 → Merchant (supplier)
-   - Account #2 → MSME Buyer
-
-### 5. Start Frontend
+### 4. Start Frontend
 
 ```bash
 cd frontend
@@ -116,29 +133,25 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Testing the Flow
+## Demo Users & Testing the Flow
 
-### Treasury Flow (Connect as Account #0)
-1. Navigate to **Treasury** view
-2. Mint tokens to any address
-3. Grant `AUTHORIZED_MERCHANT` role to new supplier addresses
-4. Toggle purpose-bound restrictions
+| User     | Role     | Login Credentials     | Capabilities                                 |
+|----------|----------|-----------------------|----------------------------------------------|
+| Bharath  | Client   | `bharath` / `bharath123` | Create escrows, request refunds            |
+| Prem     | Merchant | `prem` / `prem123`      | Confirm deliveries, view fee breakdown      |
+| Kanish   | Vendor   | `kanish` / `kanish123`  | Audit all escrows, view live activity feed  |
 
-### Buyer Flow (Connect as Account #2)
-1. Navigate to **MSME Buyer** view
-2. Create a DvP escrow (specify merchant address, amount, lock duration, and delivery proof phrase)
-3. View escrow status
+### Step-by-Step
 
-### Merchant Flow (Connect as Account #1)
-1. Navigate to **Merchant** view
-2. Look up the escrow by ID
-3. Enter the delivery proof string → **Confirm Delivery**
-4. Tokens are released to your wallet
+1. **Login as Bharath** → Create a DvP escrow (e.g., 1000 PBR, 1 hour lock, proof: `DELIVERY-SAGO-50KG`)
+2. **Login as Prem** → Enter the escrow ID and the exact proof phrase → Confirm Delivery
+3. **Observe the fee split**: 20 PBR tax (2%), 10 PBR vendor fee (1%), 970 PBR to Prem
+4. **Login as Kanish** → See the settlement appear in the Live Activity Feed
 
 ### ISO 20022 Compliance
-- Open browser DevTools (F12 → Console)
-- Every transaction logs a full ISO 20022 `pacs.008.001.08` JSON message
-- The Transaction Log panel at the bottom of the dashboard displays all formatted messages
+
+- Every transaction generates a full ISO 20022 `pacs.008.001.08` JSON message
+- The Transaction Log panel at the bottom of each dashboard displays all formatted messages
 
 ## Smart Contract Tests
 
@@ -152,35 +165,60 @@ npx hardhat test
 - Purpose-bound transfer enforcement
 - Full escrow lifecycle (create → confirm → release)
 - Escrow refund after timeout
+- Fee calculation and atomic distribution
 - Edge cases (zero amount, self-escrow, invalid proof, etc.)
 
 ## Project Structure
 
 ```
 contracts/
-├── contracts/PurposeBoundRupee.sol   # Core ERC20 + Escrow contract
-├── scripts/deploy.ts                 # Deployment script
+├── contracts/PurposeBoundRupee.sol   # Core ERC20 + Escrow + Fee Distribution
+├── scripts/deploy.ts                 # Deployment & role configuration
 ├── test/PurposeBoundRupee.test.ts    # 29 comprehensive tests
 └── hardhat.config.ts                 # Hardhat configuration
 
 frontend/
 ├── src/
 │   ├── app/
-│   │   ├── globals.css               # Design system (glassmorphism dark theme)
-│   │   ├── layout.tsx                # Root layout + Web3Provider
-│   │   └── page.tsx                  # Main dashboard page
+│   │   ├── globals.css               # Design system (light glassmorphism)
+│   │   ├── layout.tsx                # Root layout + ToastProvider
+│   │   ├── login/page.tsx            # Role-based login screen
+│   │   ├── client/page.tsx           # Bharath's dashboard
+│   │   ├── merchant/page.tsx         # Prem's dashboard
+│   │   └── vendor/page.tsx           # Kanish's dashboard
+│   │   └── api/
+│   │       ├── auth/route.ts         # Session management
+│   │       ├── balance/route.ts      # Token balances + fee config
+│   │       ├── transactions/route.ts # Transaction history
+│   │       └── escrow/
+│   │           ├── create/route.ts   # Create DvP escrow
+│   │           ├── confirm/route.ts  # Confirm delivery & settle
+│   │           ├── refund/route.ts   # Refund expired escrow
+│   │           └── list/route.ts     # List all escrows
 │   ├── components/
-│   │   ├── providers/Web3Provider    # Wagmi + QueryClient provider
-│   │   ├── layout/Sidebar            # Navigation sidebar
-│   │   ├── layout/Header             # Top header with wallet connect
-│   │   ├── dashboard/TreasuryView    # Central Authority panel
-│   │   ├── dashboard/BuyerView       # MSME Buyer panel
-│   │   ├── dashboard/MerchantView    # Merchant Supplier panel
-│   │   └── shared/                   # StatusBadge, TransactionLog
+│   │   ├── ui/
+│   │   │   ├── Icons.tsx             # 30+ custom SVG icons
+│   │   │   └── Toast.tsx             # Global toast notification system
+│   │   ├── layout/
+│   │   │   ├── Sidebar.tsx           # Navigation sidebar
+│   │   │   └── Header.tsx            # Top header bar
+│   │   ├── dashboard/
+│   │   │   ├── ClientView.tsx        # Bharath — escrow creation + timeline
+│   │   │   ├── MerchantView.tsx      # Prem — delivery confirmation + fees
+│   │   │   └── VendorView.tsx        # Kanish — audit + live feed
+│   │   └── shared/
+│   │       ├── StatusBadge.tsx        # Colored status indicators
+│   │       ├── TransactionLog.tsx     # ISO 20022 message viewer
+│   │       ├── EscrowTimeline.tsx     # Visual progress tracker
+│   │       ├── FeeBreakdown.tsx       # Settlement preview
+│   │       └── LiveActivityFeed.tsx   # Real-time event stream
+│   ├── hooks/
+│   │   └── useDashboard.ts           # Shared dashboard data hook
 │   ├── lib/
-│   │   ├── wagmi.ts                  # Wagmi config (local chain)
 │   │   ├── contracts.ts              # ABI + address constants
-│   │   └── iso20022.ts               # pacs.008 mapper utility
+│   │   ├── iso20022.ts               # pacs.008 mapper utility
+│   │   └── server/
+│   │       └── wallet.ts             # Viem clients + error parser
 │   └── types/index.ts                # Shared TypeScript types
 └── package.json
 ```
