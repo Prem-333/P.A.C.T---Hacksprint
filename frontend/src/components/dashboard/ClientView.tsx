@@ -74,17 +74,17 @@ export function ClientView({
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       {/* Balance Card */}
-      <div className="glass-card p-6 bg-gradient-to-r from-blue-500/5 via-transparent to-indigo-500/5">
+      <div className="glass-card p-5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-[var(--color-text-muted)] mb-1">
+            <p className="text-xs text-[var(--color-text-muted)] mb-1 uppercase tracking-wider font-medium">
               Your PBR Balance
             </p>
-            <p className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight">
+            <p className="text-3xl font-semibold text-[var(--color-text-primary)] tracking-tight">
               {parseFloat(balance).toLocaleString()}{" "}
-              <span className="text-lg text-[var(--color-text-accent)]">PBR</span>
+              <span className="text-lg text-[var(--color-primary)] font-medium">PBR</span>
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -93,33 +93,35 @@ export function ClientView({
               variant={isPurposeBound ? "warning" : "success"}
               icon={isPurposeBound ? "🔒" : "🔓"}
             />
-            <span className="text-[11px] font-mono text-[var(--color-text-muted)]">
-              {address.slice(0, 10)}...{address.slice(-6)}
+            <span className="text-[10px] font-mono text-[var(--color-text-muted)]">
+              {address.slice(0, 10)}..{address.slice(-6)}
             </span>
           </div>
         </div>
         {isPurposeBound && (
-          <p className="text-xs text-amber-400/80 mt-3 p-2 rounded bg-amber-500/5 border border-amber-500/20">
-            🔒 Your tokens are purpose-bound — can only be sent to authorized merchants (Prem).
+          <p className="text-xs text-[var(--color-accent-amber)] mt-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+            ℹ Your tokens are purpose-bound — can only be sent to authorized merchants (Prem).
           </p>
         )}
       </div>
 
       {/* Create Escrow Form */}
-      <div className="glass-card p-6">
-        <div className="flex items-center gap-2 mb-5">
-          <span className="text-lg">📝</span>
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-            Send Payment to Prem (Merchant)
-          </h3>
-          <span className="text-[10px] ml-auto px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+      <div className="glass-card p-5">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <span className="text-base">▶</span>
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+              Send Payment to Prem (Merchant)
+            </h3>
+          </div>
+          <span className="text-[10px] px-2.5 py-1 rounded-full bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border)] font-medium">
             DvP Escrow
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs text-[var(--color-text-muted)] mb-1.5">
+            <label className="block text-[11px] text-[var(--color-text-muted)] mb-1.5 uppercase tracking-wider font-semibold">
               Amount (PBR)
             </label>
             <input
@@ -132,7 +134,7 @@ export function ClientView({
             />
           </div>
           <div>
-            <label className="block text-xs text-[var(--color-text-muted)] mb-1.5">
+            <label className="block text-[11px] text-[var(--color-text-muted)] mb-1.5 uppercase tracking-wider font-semibold">
               Lock Duration (Hours)
             </label>
             <input
@@ -147,7 +149,7 @@ export function ClientView({
             />
           </div>
           <div>
-            <label className="block text-xs text-[var(--color-text-muted)] mb-1.5">
+            <label className="block text-[11px] text-[var(--color-text-muted)] mb-1.5 uppercase tracking-wider font-semibold">
               Delivery Proof (Secret)
             </label>
             <input
@@ -161,8 +163,8 @@ export function ClientView({
           </div>
         </div>
 
-        <div className="mt-3 p-3 rounded-lg bg-[rgba(59,130,246,0.05)] border border-blue-500/20">
-          <p className="text-xs text-blue-400/80">
+        <div className="mt-3 px-3 py-2.5 rounded-lg bg-blue-50 border border-blue-200">
+          <p className="text-xs text-blue-700">
             💡 Funds will be locked in escrow until Prem confirms delivery with the correct proof phrase.
             Share the delivery proof with Prem out-of-band once goods are shipped.
           </p>
@@ -174,13 +176,13 @@ export function ClientView({
           disabled={isCreating || !amount || !deliveryProof}
           className="btn-primary w-full mt-4"
         >
-          {isCreating ? "Creating Escrow..." : `Lock ${amount || "—"} PBR in Escrow`}
+          {isCreating ? "Creating Escrow..." : `🔒 Lock ${amount || "—"} PBR in Escrow`}
         </button>
 
         {result && (
           <p
             className={`text-xs mt-2 ${
-              result.success ? "text-emerald-400" : "text-rose-400"
+              result.success ? "text-[var(--color-accent-emerald)]" : "text-[var(--color-accent-rose)]"
             }`}
           >
             {result.success ? "✓" : "✗"} {result.message}
@@ -189,20 +191,22 @@ export function ClientView({
       </div>
 
       {/* Active Escrows */}
-      <div className="glass-card p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg">📋</span>
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-            Your Active Escrows
-          </h3>
-          <span className="text-xs text-[var(--color-text-muted)] ml-auto">
+      <div className="glass-card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-base">📋</span>
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+              Your Active Escrows
+            </h3>
+          </div>
+          <span className="text-xs text-[var(--color-text-muted)]">
             {myEscrows.length} escrow(s)
           </span>
         </div>
 
         {myEscrows.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-3xl mb-3">📭</div>
+          <div className="text-center py-8 border border-dashed border-[var(--color-border)] rounded-lg">
+            <div className="text-2xl mb-2 opacity-40">📭</div>
             <p className="text-sm text-[var(--color-text-muted)]">
               No escrows yet. Send a payment above to create one.
             </p>

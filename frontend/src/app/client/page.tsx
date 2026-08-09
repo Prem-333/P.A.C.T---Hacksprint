@@ -12,9 +12,9 @@ export default function ClientPage() {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen bg-[var(--color-background)] bg-mesh flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center">
         <div className="text-center animate-fade-in">
-          <div className="inline-block w-8 h-8 border-3 border-blue-400/30 border-t-blue-400 rounded-full animate-spin mb-4" />
+          <div className="inline-block w-8 h-8 border-3 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin mb-4" />
           <p className="text-sm text-[var(--color-text-muted)]">Loading Client Dashboard...</p>
         </div>
       </div>
@@ -31,7 +31,7 @@ export default function ClientPage() {
   }));
 
   return (
-    <div className="flex h-screen overflow-hidden bg-mesh">
+    <div className="flex h-screen overflow-hidden bg-[var(--color-background)]">
       <Sidebar activeRole="client" userName={user.name} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
