@@ -26,8 +26,8 @@ export function TransactionLog({ entries }: TransactionLogProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="glass-card p-6 text-center">
-        <div className="text-2xl mb-2">📋</div>
+      <div className="glass-card p-5 text-center">
+        <div className="text-xl mb-2 opacity-30">📋</div>
         <p className="text-[var(--color-text-muted)] text-sm">
           No transactions recorded yet. Execute a contract interaction to see
           ISO 20022 compliance data.
@@ -38,15 +38,15 @@ export function TransactionLog({ entries }: TransactionLogProps) {
 
   return (
     <div className="glass-card overflow-hidden">
-      <div className="px-5 py-4 border-b border-[var(--color-border)]">
+      <div className="px-5 py-3.5 border-b border-[var(--color-border)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-lg">📊</span>
+            <span className="text-base">📊</span>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
               ISO 20022 Transaction Log
             </h3>
           </div>
-          <span className="text-xs text-[var(--color-text-muted)] font-mono">
+          <span className="text-[10px] text-[var(--color-text-muted)] font-mono px-2 py-0.5 bg-[var(--color-surface-subtle)] rounded">
             pacs.008.001.08
           </span>
         </div>
@@ -59,13 +59,13 @@ export function TransactionLog({ entries }: TransactionLogProps) {
               onClick={() =>
                 setExpandedIndex(expandedIndex === index ? null : index)
               }
-              className="w-full px-5 py-3 flex items-center justify-between hover:bg-[var(--color-primary-glow)] transition-colors"
+              className="w-full px-5 py-3 flex items-center justify-between hover:bg-[var(--color-surface-subtle)] transition-colors"
             >
               <div className="flex items-center gap-3">
                 <span className="text-xs font-mono text-[var(--color-text-accent)]">
                   {entry.txHash.slice(0, 10)}...{entry.txHash.slice(-6)}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded bg-[var(--color-primary-glow)] text-[var(--color-primary)] font-medium">
+                <span className="text-[11px] px-2 py-0.5 rounded bg-[var(--color-primary-light)] text-[var(--color-primary)] font-medium">
                   {entry.type}
                 </span>
               </div>
@@ -74,7 +74,7 @@ export function TransactionLog({ entries }: TransactionLogProps) {
                   {new Date(entry.timestamp).toLocaleTimeString()}
                 </span>
                 <span
-                  className={`text-xs transition-transform ${
+                  className={`text-xs text-[var(--color-text-muted)] transition-transform ${
                     expandedIndex === index ? "rotate-180" : ""
                   }`}
                 >
@@ -85,7 +85,7 @@ export function TransactionLog({ entries }: TransactionLogProps) {
 
             {expandedIndex === index && (
               <div className="px-5 pb-4 animate-fade-in">
-                <div className="bg-[rgba(6,10,19,0.6)] rounded-lg p-4 overflow-x-auto">
+                <div className="bg-[var(--color-surface-subtle)] rounded-lg p-4 overflow-x-auto border border-[var(--color-border)]">
                   <pre className="text-xs font-mono text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap">
                     {JSON.stringify(entry.iso20022, null, 2)}
                   </pre>
