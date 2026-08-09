@@ -9,12 +9,18 @@
 
 import { useState, useCallback } from "react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { FeeBreakdown } from "@/components/shared/FeeBreakdown";
+import { EscrowTimeline } from "@/components/shared/EscrowTimeline";
+import { useToast } from "@/components/ui/Toast";
+import { CheckCircleIcon, InboxIcon, LinkIcon, LockIcon, TruckIcon, CoinsIcon, CheckIcon, UserIcon, ClockIcon } from "@/components/ui/Icons";
 
 interface MerchantViewProps {
   balance: string;
   address: string;
   escrows: Record<string, unknown>[];
   activeEscrows: number;
+  taxBps: number;
+  vendorFeeBps: number;
   onRefresh: () => void;
 }
 
@@ -23,21 +29,26 @@ export function MerchantView({
   address,
   escrows,
   activeEscrows,
+  taxBps,
+  vendorFeeBps,
   onRefresh,
 }: MerchantViewProps) {
+  const { toast } = useToast();
   const [escrowId, setEscrowId] = useState("");
   const [deliveryProof, setDeliveryProof] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
-  const [result, setResult] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
 
   const handleConfirmDelivery = useCallback(async () => {
-    if (!escrowId || !deliveryProof) return;
+    if (!escrowId || !deliveryProof) {
+      toast({
+        type: "error",
+        message: "Missing fields",
+        description: "Please enter escrow ID and delivery proof.",
+      });
+      return;
+    }
 
     setIsConfirming(true);
-    setResult(null);
 
     try {
       const res = await fetch("/api/escrow/confirm", {
@@ -51,19 +62,31 @@ export function MerchantView({
       const data = await res.json();
 
       if (res.ok) {
-        setResult({ success: true, message: data.message });
+        toast({
+          type: "success",
+          message: "Delivery Confirmed",
+          description: data.message,
+        });
         setEscrowId("");
         setDeliveryProof("");
         onRefresh();
       } else {
-        setResult({ success: false, message: data.error });
+        toast({
+          type: "error",
+          message: "Confirmation Failed",
+          description: data.error,
+        });
       }
     } catch {
-      setResult({ success: false, message: "Network error" });
+      toast({
+        type: "error",
+        message: "Network Error",
+        description: "Failed to connect to the server.",
+      });
     } finally {
       setIsConfirming(false);
     }
-  }, [escrowId, deliveryProof, onRefresh]);
+  }, [escrowId, deliveryProof, onRefresh, toast]);
 
   // Filter escrows where Prem is the seller
   const myEscrows = escrows.filter(
@@ -101,7 +124,7 @@ export function MerchantView({
         <div className="glass-card p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <span className="text-base">📥</span>
+              <span className="text-[var(--color-primary)]"><InboxIcon size={20} /></span>
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
                 Incoming Escrows
               </h3>
@@ -113,43 +136,46 @@ export function MerchantView({
 
           {pendingEscrows.length === 0 ? (
             <div className="text-center py-10">
-              <div className="text-2xl mb-2 opacity-30">📭</div>
+              <div className="flex justify-center mb-2 opacity-30 text-[var(--color-text-muted)]"><InboxIcon size={32} /></div>
               <p className="text-xs text-[var(--color-text-muted)]">
                 No pending escrows. Waiting for buyers to initiate a payment contract.
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-4">
               {pendingEscrows.map((escrow) => (
                 <div
                   key={escrow.id as number}
-                  className="p-3.5 rounded-lg bg-[var(--color-surface-subtle)] border border-[var(--color-border)] animate-fade-in"
+                  className="bg-white rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden animate-fade-in"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-mono text-[var(--color-text-accent)]">
-                      Escrow #{(escrow.id as number).toString()}
-                    </span>
-                    <StatusBadge label="PENDING" variant="warning" />
+                  <div className="px-4 py-3 bg-[var(--color-surface-subtle)] border-b border-[var(--color-border)] flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-[var(--color-accent-amber)]/10 text-[var(--color-accent-amber)]">
+                        #{(escrow.id as number).toString()}
+                      </span>
+                      <StatusBadge label="PENDING" variant="warning" />
+                    </div>
+                    <span className="font-semibold text-sm">{escrow.amount as string} PBR</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-[var(--color-text-muted)]">From:</span>{" "}
-                      <span className="text-[var(--color-text-primary)] font-medium">
-                        {escrow.buyerName as string}
-                      </span>
+                  
+                  <div className="p-4">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                        <UserIcon size={14} className="text-[var(--color-text-muted)]" />
+                        <span className="text-[var(--color-text-muted)]">From:</span>
+                        <span className="font-medium text-[var(--color-text-primary)]">{(escrow.buyerName as string) || "Unknown"}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                        <ClockIcon size={14} className="text-[var(--color-text-muted)]" />
+                        <span>{escrow.deadlineFormatted as string}</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[var(--color-text-muted)]">Amount:</span>{" "}
-                      <span className="font-semibold text-[var(--color-accent-emerald)]">
-                        {escrow.amount as string} PBR
-                      </span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-[var(--color-text-muted)]">Deadline:</span>{" "}
-                      <span className="text-[var(--color-text-secondary)]">
-                        {escrow.deadlineFormatted as string}
-                      </span>
-                    </div>
+
+                    <FeeBreakdown 
+                      amount={escrow.amount as string} 
+                      taxBps={taxBps} 
+                      vendorFeeBps={vendorFeeBps} 
+                    />
                   </div>
                 </div>
               ))}
@@ -160,7 +186,7 @@ export function MerchantView({
         {/* Confirm Delivery Panel */}
         <div className="glass-card p-5">
           <div className="flex items-center gap-2 mb-5">
-            <span className="text-base">✅</span>
+            <span className="text-[var(--color-accent-emerald)]"><CheckCircleIcon size={20} /></span>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
               Confirm Delivery
             </h3>
@@ -206,22 +232,20 @@ export function MerchantView({
               id="btn-confirm-delivery"
               onClick={handleConfirmDelivery}
               disabled={isConfirming || !escrowId || !deliveryProof}
-              className="btn-success w-full mt-2"
+              className="btn-success w-full mt-2 flex items-center justify-center gap-2"
             >
-              {isConfirming
-                ? "Confirming..."
-                : "Confirm Delivery & Release Funds →"}
+              {isConfirming ? (
+                <>
+                  <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Confirming...
+                </>
+              ) : (
+                <>
+                  Confirm Delivery & Release Funds
+                  <CheckCircleIcon size={16} />
+                </>
+              )}
             </button>
-
-            {result && (
-              <p
-                className={`text-xs mt-2 ${
-                  result.success ? "text-[var(--color-accent-emerald)]" : "text-[var(--color-accent-rose)]"
-                }`}
-              >
-                {result.success ? "✓" : "✗"} {result.message}
-              </p>
-            )}
           </div>
         </div>
       </div>
@@ -230,38 +254,42 @@ export function MerchantView({
       {completedEscrows.length > 0 && (
         <div className="glass-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-base">✅</span>
+            <span className="text-[var(--color-accent-emerald)]"><CheckCircleIcon size={20} /></span>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
               Completed Settlements
             </h3>
           </div>
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>From</th>
-                  <th>Amount Received</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {completedEscrows.map((escrow) => (
-                  <tr key={escrow.id as number}>
-                    <td className="font-mono text-[var(--color-text-accent)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {completedEscrows.map((escrow) => (
+              <div key={escrow.id as number} className="border border-[var(--color-border)] rounded-xl bg-white overflow-hidden flex flex-col shadow-sm">
+                {/* Card Header */}
+                <div className="px-4 py-3 bg-[var(--color-surface-subtle)] border-b border-[var(--color-border)] flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-[var(--color-accent-emerald)]/10 text-[var(--color-accent-emerald)]">
                       #{(escrow.id as number).toString()}
-                    </td>
-                    <td>{escrow.buyerName as string}</td>
-                    <td className="font-semibold text-[var(--color-accent-emerald)]">
-                      +{escrow.amount as string} PBR
-                    </td>
-                    <td>
-                      <StatusBadge label="COMPLETED" variant="success" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                    <StatusBadge label="COMPLETED" variant="success" />
+                  </div>
+                  <span className="font-semibold text-sm text-[var(--color-accent-emerald)]">+{escrow.amount as string} PBR</span>
+                </div>
+                
+                {/* Card Body */}
+                <div className="p-4 flex-1">
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                      <UserIcon size={14} className="text-[var(--color-text-muted)]" />
+                      <span className="text-[var(--color-text-muted)]">From:</span>
+                      <span className="font-medium text-[var(--color-text-primary)]">{(escrow.buyerName as string) || "Unknown"}</span>
+                    </div>
+                  </div>
+
+                  <EscrowTimeline 
+                    escrowStatus={escrow.status as string} 
+                    deadlineFormatted={escrow.deadlineFormatted as string} 
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -269,23 +297,23 @@ export function MerchantView({
       {/* Supply Chain Flow */}
       <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-base">🔗</span>
+          <span className="text-[var(--color-primary)]"><LinkIcon size={20} /></span>
           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
             Settlement Flow
           </h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           {[
-            { step: "1", label: "Bharath Locks Funds", icon: "🔒", status: "Escrow Created" },
-            { step: "2", label: "Goods Shipped", icon: "🚚", status: "In Transit" },
-            { step: "3", label: "Prem Confirms", icon: "✅", status: "Proof Verified" },
-            { step: "4", label: "Funds Released", icon: "💰", status: "Settlement Done" },
+            { step: "1", label: "Bharath Locks Funds", icon: <LockIcon size={24} className="text-blue-500" />, status: "Escrow Created" },
+            { step: "2", label: "Goods Shipped", icon: <TruckIcon size={24} className="text-purple-500" />, status: "In Transit" },
+            { step: "3", label: "Prem Confirms", icon: <CheckIcon size={24} className="text-emerald-500" />, status: "Proof Verified" },
+            { step: "4", label: "Funds Released", icon: <CoinsIcon size={24} className="text-amber-500" />, status: "Settlement Done" },
           ].map((item, i) => (
             <div
               key={item.step}
               className="flex flex-col items-center text-center p-4 rounded-lg bg-[var(--color-surface-subtle)] border border-[var(--color-border)] relative"
             >
-              <span className="text-xl mb-2">{item.icon}</span>
+              <span className="mb-2">{item.icon}</span>
               <span className="text-xs font-medium text-[var(--color-text-primary)] mb-1">
                 {item.label}
               </span>

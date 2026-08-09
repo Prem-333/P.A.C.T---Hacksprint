@@ -51,6 +51,8 @@ export default function MerchantPage() {
               address={user.address}
               escrows={escrows}
               activeEscrows={balances?.activeEscrows || 0}
+              taxBps={balances?.taxBps || 200}
+              vendorFeeBps={balances?.vendorFeeBps || 100}
               onRefresh={fetchData}
             />
           </div>
