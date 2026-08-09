@@ -6,6 +6,8 @@
  * wallet address, and logout button. No MetaMask connection needed.
  */
 
+import { BellIcon, LogOutIcon } from "@/components/ui/Icons";
+
 interface HeaderProps {
   viewTitle: string;
   viewDescription: string;
@@ -54,8 +56,8 @@ export function Header({
       {/* Right: User Info + Logout */}
       <div className="flex items-center gap-4">
         {/* Notifications */}
-        <button className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)] transition-colors">
-          🔔
+        <button className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)] transition-colors">
+          <BellIcon size={18} />
         </button>
 
         {/* Role badge */}
@@ -82,8 +84,9 @@ export function Header({
         <button
           id="btn-logout"
           onClick={onLogout}
-          className="text-[0.8125rem] text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] font-medium transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.8125rem] text-[var(--color-text-secondary)] hover:text-[var(--color-accent-rose)] hover:bg-rose-50 font-medium transition-colors"
         >
+          <LogOutIcon size={16} />
           Logout
         </button>
       </div>

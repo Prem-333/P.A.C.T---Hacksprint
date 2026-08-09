@@ -8,6 +8,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { BuildingIcon, PackageIcon, EyeIcon } from "@/components/ui/Icons";
+import { useToast } from "@/components/ui/Toast";
 
 interface UserCard {
   username: string;
@@ -15,7 +17,7 @@ interface UserCard {
   name: string;
   role: string;
   roleLabel: string;
-  icon: string;
+  icon: React.ReactNode;
   description: string;
   color: string;
 }
@@ -27,8 +29,8 @@ const userCards: UserCard[] = [
     name: "Bharath",
     role: "Client",
     roleLabel: "CLIENT (BUYER)",
-    icon: "🏢",
-    color: "text-[var(--color-primary)]",
+    icon: <BuildingIcon size={20} className="text-blue-500" />,
+    color: "text-blue-600",
     description: "MSME Raw Material Buyer — Sends payments through escrow.",
   },
   {
@@ -37,8 +39,8 @@ const userCards: UserCard[] = [
     name: "Prem",
     role: "Merchant",
     roleLabel: "MERCHANT (SUPPLIER)",
-    icon: "📦",
-    color: "text-[var(--color-accent-emerald)]",
+    icon: <PackageIcon size={20} className="text-emerald-500" />,
+    color: "text-emerald-600",
     description: "Authorized Merchant — Confirms delivery & receives funds.",
   },
   {
@@ -47,17 +49,17 @@ const userCards: UserCard[] = [
     name: "Kanish",
     role: "Vendor",
     roleLabel: "VENDOR (OBSERVER)",
-    icon: "📊",
-    color: "text-[var(--color-accent-violet)]",
+    icon: <EyeIcon size={20} className="text-purple-500" />,
+    color: "text-purple-600",
     description: "Supply Chain Vendor — Monitors all transactions securely.",
   },
 ];
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
@@ -66,12 +68,15 @@ export default function LoginPage() {
     const loginPass = pass || password;
 
     if (!loginUser || !loginPass) {
-      setError("Please enter username and password");
+      toast({
+        type: "error",
+        message: "Missing credentials",
+        description: "Please enter both username and password.",
+      });
       return;
     }
 
     setIsLoading(true);
-    setError("");
     setSelectedUser(loginUser);
 
     try {
@@ -84,17 +89,32 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Login failed");
+        toast({
+          type: "error",
+          message: "Login failed",
+          description: data.error || "Invalid username or password.",
+        });
         setIsLoading(false);
         setSelectedUser(null);
         return;
       }
 
+      toast({
+        type: "success",
+        message: "Welcome back!",
+        description: `Successfully signed in as ${data.user.name}.`,
+        duration: 3000,
+      });
+
       // Redirect to dashboard
       router.push("/");
       router.refresh();
     } catch {
-      setError("Connection failed. Is the server running?");
+      toast({
+        type: "error",
+        message: "Connection failed",
+        description: "Could not connect to the server. Is it running?",
+      });
       setIsLoading(false);
       setSelectedUser(null);
     }
@@ -124,13 +144,14 @@ export default function LoginPage() {
 
         {/* User Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {userCards.map((card) => (
+          {userCards.map((card, index) => (
             <button
               key={card.username}
               id={`login-${card.username}`}
               onClick={() => handleCardClick(card)}
               disabled={isLoading}
-              className={`glass-card p-5 text-left transition-all duration-200 hover:shadow-[var(--shadow-card-hover)] ${
+              style={{ animationDelay: `${index * 100}ms` }}
+              className={`glass-card p-5 text-left animate-fade-in opacity-0 fill-mode-forwards transition-all duration-200 hover:shadow-[var(--shadow-card-hover)] ${
                 selectedUser === card.username
                   ? "ring-2 ring-[var(--color-primary)]/40 shadow-[var(--shadow-card-hover)]"
                   : ""
@@ -191,9 +212,6 @@ export default function LoginPage() {
               className="input-field"
               onKeyDown={(e) => e.key === "Enter" && handleLogin()}
             />
-            {error && (
-              <p className="text-xs text-[var(--color-accent-rose)] text-center">{error}</p>
-            )}
             <button
               id="btn-login"
               onClick={() => handleLogin()}
