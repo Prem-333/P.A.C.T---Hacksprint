@@ -12,9 +12,9 @@ export default function VendorPage() {
 
   if (isLoading || !user || !balances) {
     return (
-      <div className="min-h-screen bg-[var(--color-background)] bg-mesh flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center">
         <div className="text-center animate-fade-in">
-          <div className="inline-block w-8 h-8 border-3 border-violet-400/30 border-t-violet-400 rounded-full animate-spin mb-4" />
+          <div className="inline-block w-8 h-8 border-3 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin mb-4" />
           <p className="text-sm text-[var(--color-text-muted)]">Loading Vendor Dashboard...</p>
         </div>
       </div>
@@ -29,7 +29,7 @@ export default function VendorPage() {
   }));
 
   return (
-    <div className="flex h-screen overflow-hidden bg-mesh">
+    <div className="flex h-screen overflow-hidden bg-[var(--color-background)]">
       <Sidebar activeRole="vendor" userName={user.name} />
 
       <div className="flex-1 flex flex-col overflow-hidden">

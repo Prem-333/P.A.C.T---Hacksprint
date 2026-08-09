@@ -37,46 +37,24 @@ interface VendorViewProps {
 }
 
 const roleIcons: Record<string, string> = {
-  client: "🏭",
+  client: "🏢",
   merchant: "📦",
-  vendor: "🔍",
+  vendor: "📊",
+};
+
+const roleLabels: Record<string, string> = {
+  client: "CLIENT",
+  merchant: "MERCHANT",
+  vendor: "VENDOR",
 };
 
 export function VendorView({ balances, escrows, transactions }: VendorViewProps) {
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Platform Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard
-          icon="💰"
-          label="Total Supply"
-          value={balances ? `${parseFloat(balances.totalSupply).toLocaleString()} PBR` : "—"}
-          color="blue"
-        />
-        <StatCard
-          icon="🔒"
-          label="Active Escrows"
-          value={balances?.activeEscrows.toString() || "0"}
-          color="amber"
-        />
-        <StatCard
-          icon="📋"
-          label="Total Escrows"
-          value={escrows.length.toString()}
-          color="violet"
-        />
-        <StatCard
-          icon="📊"
-          label="Transactions"
-          value={transactions.length.toString()}
-          color="cyan"
-        />
-      </div>
-
+    <div className="space-y-5 animate-fade-in">
       {/* All Users Balances */}
-      <div className="glass-card p-6">
+      <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg">👥</span>
+          <span className="text-base">👥</span>
           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
             All Users — Live Balances
           </h3>
@@ -87,23 +65,25 @@ export function VendorView({ balances, escrows, transactions }: VendorViewProps)
             {balances.users.map((user) => (
               <div
                 key={user.username}
-                className="p-4 rounded-xl bg-[rgba(6,10,19,0.5)] border border-[var(--color-border)]"
+                className="p-4 rounded-xl bg-[var(--color-surface-subtle)] border border-[var(--color-border)]"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-2xl">{roleIcons[user.role] || "👤"}</span>
+                  <div className="w-10 h-10 rounded-lg bg-white border border-[var(--color-border)] flex items-center justify-center text-lg">
+                    {roleIcons[user.role] || "👤"}
+                  </div>
                   <div>
                     <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {user.name}
                     </p>
-                    <p className="text-[10px] text-[var(--color-text-muted)] uppercase">
-                      {user.role}
+                    <p className="text-[10px] text-[var(--color-text-muted)] uppercase font-medium tracking-wider">
+                      {roleLabels[user.role] || user.role}
                     </p>
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-[var(--color-text-muted)]">Balance</span>
-                    <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                    <span className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {parseFloat(user.balance).toLocaleString()} PBR
                     </span>
                   </div>
@@ -132,23 +112,34 @@ export function VendorView({ balances, escrows, transactions }: VendorViewProps)
       </div>
 
       {/* All Escrows */}
-      <div className="glass-card p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg">🔗</span>
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-            All Escrows — Supply Chain Audit
-          </h3>
-          <span className="text-xs text-[var(--color-text-muted)] ml-auto">
+      <div className="glass-card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-base">📑</span>
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+              All Escrows — Supply Chain Audit
+            </h3>
+          </div>
+          <span className="text-xs text-[var(--color-text-muted)]">
             {escrows.length} total
           </span>
         </div>
 
         {escrows.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-3xl mb-3">📭</div>
-            <p className="text-sm text-[var(--color-text-muted)]">
+          <div className="text-center py-10 border border-dashed border-[var(--color-border)] rounded-lg">
+            <div className="text-2xl mb-2 opacity-30">📑</div>
+            <p className="text-sm text-[var(--color-text-primary)] font-medium mb-1">
+              All Escrows — Supply Chain Audit
+            </p>
+            <p className="text-xs text-[var(--color-text-muted)] mb-3">
               No escrows created yet. Waiting for Bharath to initiate a transaction.
             </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="btn-outline"
+            >
+              Refresh Status
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -200,13 +191,15 @@ export function VendorView({ balances, escrows, transactions }: VendorViewProps)
       </div>
 
       {/* Transaction History */}
-      <div className="glass-card p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg">📊</span>
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-            Transaction History
-          </h3>
-          <span className="text-xs text-[var(--color-text-muted)] ml-auto">
+      <div className="glass-card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-base">📊</span>
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+              Transaction History
+            </h3>
+          </div>
+          <span className="text-xs text-[var(--color-text-muted)]">
             {transactions.length} recorded
           </span>
         </div>
@@ -238,7 +231,7 @@ export function VendorView({ balances, escrows, transactions }: VendorViewProps)
                       {tx.txHash.slice(0, 10)}...
                     </td>
                     <td>
-                      <span className="text-xs px-2 py-0.5 rounded bg-[var(--color-primary-glow)] text-[var(--color-primary)] font-medium">
+                      <span className="text-xs px-2 py-0.5 rounded bg-[var(--color-primary-light)] text-[var(--color-primary)] font-medium">
                         {tx.type}
                       </span>
                     </td>
@@ -256,41 +249,6 @@ export function VendorView({ balances, escrows, transactions }: VendorViewProps)
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-// ── Stat Card Sub-component ──
-
-function StatCard({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: string;
-  label: string;
-  value: string;
-  color: string;
-}) {
-  const colorMap: Record<string, string> = {
-    blue: "from-blue-500/10 to-blue-600/5 border-blue-500/20",
-    amber: "from-amber-500/10 to-amber-600/5 border-amber-500/20",
-    violet: "from-violet-500/10 to-violet-600/5 border-violet-500/20",
-    cyan: "from-cyan-500/10 to-cyan-600/5 border-cyan-500/20",
-  };
-
-  return (
-    <div className={`glass-card p-5 bg-gradient-to-br ${colorMap[color]}`}>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-2xl">{icon}</span>
-        <span className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
-          {label}
-        </span>
-      </div>
-      <p className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">
-        {value}
-      </p>
     </div>
   );
 }
