@@ -73,47 +73,49 @@ export function MerchantView({
   const completedEscrows = myEscrows.filter((e) => e.status === "COMPLETED");
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       {/* Balance Card */}
-      <div className="glass-card p-6 bg-gradient-to-r from-emerald-500/5 via-transparent to-teal-500/5">
+      <div className="glass-card p-5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-[var(--color-text-muted)] mb-1">
+            <p className="text-xs text-[var(--color-text-muted)] mb-1 uppercase tracking-wider font-medium">
               Your PBR Balance
             </p>
-            <p className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight">
+            <p className="text-3xl font-semibold text-[var(--color-text-primary)] tracking-tight">
               {parseFloat(balance).toLocaleString()}{" "}
-              <span className="text-lg text-emerald-400">PBR</span>
+              <span className="text-lg text-[var(--color-accent-emerald)] font-medium">PBR</span>
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
             <StatusBadge label="Authorized Merchant" variant="success" icon="✓" />
             <div className="flex items-center gap-4 text-xs text-[var(--color-text-muted)]">
-              <span>Pending: <strong className="text-amber-400">{pendingEscrows.length}</strong></span>
-              <span>Active: <strong className="text-blue-400">{activeEscrows}</strong></span>
+              <span>Pending <strong className="text-[var(--color-accent-amber)]">{pendingEscrows.length}</strong></span>
+              <span>Active <strong className="text-[var(--color-primary)]">{activeEscrows}</strong></span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Incoming Pending Escrows */}
-        <div className="glass-card p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-lg">📥</span>
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-              Incoming Escrows
-            </h3>
-            <span className="text-xs text-amber-400 ml-auto">
+        <div className="glass-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-base">📥</span>
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                Incoming Escrows
+              </h3>
+            </div>
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-[var(--color-accent-amber)] border border-amber-200 font-medium">
               {pendingEscrows.length} pending
             </span>
           </div>
 
           {pendingEscrows.length === 0 ? (
-            <div className="text-center py-6">
-              <div className="text-2xl mb-2">📭</div>
+            <div className="text-center py-10">
+              <div className="text-2xl mb-2 opacity-30">📭</div>
               <p className="text-xs text-[var(--color-text-muted)]">
-                No pending escrows. Waiting for Bharath to send a payment.
+                No pending escrows. Waiting for buyers to initiate a payment contract.
               </p>
             </div>
           ) : (
@@ -121,7 +123,7 @@ export function MerchantView({
               {pendingEscrows.map((escrow) => (
                 <div
                   key={escrow.id as number}
-                  className="p-4 rounded-lg bg-[rgba(6,10,19,0.6)] border border-[var(--color-border)] animate-fade-in"
+                  className="p-3.5 rounded-lg bg-[var(--color-surface-subtle)] border border-[var(--color-border)] animate-fade-in"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-mono text-[var(--color-text-accent)]">
@@ -132,13 +134,13 @@ export function MerchantView({
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
                       <span className="text-[var(--color-text-muted)]">From:</span>{" "}
-                      <span className="text-[var(--color-text-primary)]">
+                      <span className="text-[var(--color-text-primary)] font-medium">
                         {escrow.buyerName as string}
                       </span>
                     </div>
                     <div>
                       <span className="text-[var(--color-text-muted)]">Amount:</span>{" "}
-                      <span className="font-semibold text-emerald-400">
+                      <span className="font-semibold text-[var(--color-accent-emerald)]">
                         {escrow.amount as string} PBR
                       </span>
                     </div>
@@ -156,9 +158,9 @@ export function MerchantView({
         </div>
 
         {/* Confirm Delivery Panel */}
-        <div className="glass-card p-6">
+        <div className="glass-card p-5">
           <div className="flex items-center gap-2 mb-5">
-            <span className="text-lg">✅</span>
+            <span className="text-base">✅</span>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
               Confirm Delivery
             </h3>
@@ -166,7 +168,7 @@ export function MerchantView({
 
           <div className="space-y-3">
             <div>
-              <label className="block text-xs text-[var(--color-text-muted)] mb-1.5">
+              <label className="block text-[11px] text-[var(--color-text-muted)] mb-1.5 uppercase tracking-wider font-semibold">
                 Escrow ID
               </label>
               <input
@@ -180,8 +182,8 @@ export function MerchantView({
               />
             </div>
             <div>
-              <label className="block text-xs text-[var(--color-text-muted)] mb-1.5">
-                Delivery Proof (from Bharath)
+              <label className="block text-[11px] text-[var(--color-text-muted)] mb-1.5 uppercase tracking-wider font-semibold">
+                Delivery Proof (from Buyer)
               </label>
               <input
                 id="input-confirm-proof"
@@ -193,10 +195,10 @@ export function MerchantView({
               />
             </div>
 
-            <div className="p-3 rounded-lg bg-[rgba(16,185,129,0.05)] border border-emerald-500/20">
-              <p className="text-xs text-emerald-400/80">
-                ℹ️ Enter the exact delivery proof phrase shared by Bharath.
-                The smart contract verifies it matches the on-chain hash.
+            <div className="px-3 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
+              <p className="text-xs text-emerald-700">
+                ℹ️ Enter the exact delivery proof phrase shared by the buyer.
+                The smart contract verifies it matches the on-chain hash before releasing funds.
               </p>
             </div>
 
@@ -208,13 +210,13 @@ export function MerchantView({
             >
               {isConfirming
                 ? "Confirming..."
-                : "Confirm Delivery & Release Funds"}
+                : "Confirm Delivery & Release Funds →"}
             </button>
 
             {result && (
               <p
                 className={`text-xs mt-2 ${
-                  result.success ? "text-emerald-400" : "text-rose-400"
+                  result.success ? "text-[var(--color-accent-emerald)]" : "text-[var(--color-accent-rose)]"
                 }`}
               >
                 {result.success ? "✓" : "✗"} {result.message}
@@ -226,9 +228,9 @@ export function MerchantView({
 
       {/* Completed Escrows */}
       {completedEscrows.length > 0 && (
-        <div className="glass-card p-6">
+        <div className="glass-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-lg">✅</span>
+            <span className="text-base">✅</span>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
               Completed Settlements
             </h3>
@@ -250,7 +252,7 @@ export function MerchantView({
                       #{(escrow.id as number).toString()}
                     </td>
                     <td>{escrow.buyerName as string}</td>
-                    <td className="font-semibold text-emerald-400">
+                    <td className="font-semibold text-[var(--color-accent-emerald)]">
                       +{escrow.amount as string} PBR
                     </td>
                     <td>
@@ -265,9 +267,9 @@ export function MerchantView({
       )}
 
       {/* Supply Chain Flow */}
-      <div className="glass-card p-6">
+      <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg">🔗</span>
+          <span className="text-base">🔗</span>
           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
             Settlement Flow
           </h3>
@@ -281,10 +283,10 @@ export function MerchantView({
           ].map((item, i) => (
             <div
               key={item.step}
-              className="flex flex-col items-center text-center p-4 rounded-lg bg-[rgba(6,10,19,0.4)] border border-[var(--color-border)] relative"
+              className="flex flex-col items-center text-center p-4 rounded-lg bg-[var(--color-surface-subtle)] border border-[var(--color-border)] relative"
             >
-              <span className="text-2xl mb-2">{item.icon}</span>
-              <span className="text-xs font-semibold text-[var(--color-text-primary)] mb-1">
+              <span className="text-xl mb-2">{item.icon}</span>
+              <span className="text-xs font-medium text-[var(--color-text-primary)] mb-1">
                 {item.label}
               </span>
               <span className="text-[10px] text-[var(--color-text-muted)]">
