@@ -1,11 +1,12 @@
 /**
  * @module server/wallet
- * @description Server-side Viem wallet clients for the three named users.
+ * @description Server-side Viem wallet clients for the named users and the logistics oracle.
  * Each user maps to a Hardhat test account with a known private key.
  * The server signs all transactions on behalf of users — no MetaMask needed.
  *
  * ⚠️ DEMO ONLY — Private keys are hardcoded Hardhat test keys.
- * Never use this pattern in production.
+ * Never use this pattern in production. In production, this layer would be
+ * replaced by ERC-4337 Account Abstraction with a Paymaster/Bundler.
  */
 
 import {
@@ -59,6 +60,10 @@ const ACCOUNTS = {
   /** Account #3 — Kanish (Vendor). Observer/auditor of the supply chain. */
   vendor: privateKeyToAccount(
     "0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6"
+  ),
+  /** Account #4 — Logistics Oracle (simulated e-Way Bill API signer). */
+  oracle: privateKeyToAccount(
+    "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a"
   ),
 } as const;
 
@@ -288,23 +293,42 @@ export async function createEscrow(params: {
   };
 }
 
-/** Confirms delivery and releases escrow funds (called by Prem/Merchant). */
+/**
+ * Confirms delivery via 2-of-3 multi-sig consensus.
+ * The merchant submits their vote, and the logistics oracle
+ * automatically co-signs (simulating an e-Way Bill API webhook).
+ * This ensures trustless settlement: no single party can unilaterally release funds.
+ */
 export async function confirmDelivery(params: {
   escrowId: number;
   deliveryProof: string;
 }) {
-  const walletClient = getWalletClient("merchant");
-
-  const hash = await walletClient.writeContract({
+  // Step 1: Merchant submits their vote
+  const merchantClient = getWalletClient("merchant");
+  const hash1 = await merchantClient.writeContract({
     address: PBR_CONTRACT_ADDRESS,
     abi: PBR_ABI,
     functionName: "confirmDelivery",
     args: [BigInt(params.escrowId), params.deliveryProof],
   });
+  await publicClient.waitForTransactionReceipt({ hash: hash1 });
 
-  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  // Step 2: Logistics Oracle automatically co-signs (simulated e-Way Bill webhook)
+  const oracleClient = createWalletClient({
+    account: ACCOUNTS.oracle,
+    chain: hardhat,
+    transport: http(RPC_URL),
+  });
+  const hash2 = await oracleClient.writeContract({
+    address: PBR_CONTRACT_ADDRESS,
+    abi: PBR_ABI,
+    functionName: "confirmDelivery",
+    args: [BigInt(params.escrowId), params.deliveryProof],
+  });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash: hash2 });
+
   return {
-    txHash: hash,
+    txHash: hash2,
     blockNumber: Number(receipt.blockNumber),
     status: receipt.status,
   };

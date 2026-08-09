@@ -10,6 +10,7 @@ describe("PurposeBoundRupee", function () {
   let merchant: HardhatEthersSigner;
   let buyer: HardhatEthersSigner;
   let unauthorized: HardhatEthersSigner;
+  let oracle: HardhatEthersSigner;
 
   const CENTRAL_AUTHORITY = ethers.keccak256(ethers.toUtf8Bytes("CENTRAL_AUTHORITY"));
   const AUTHORIZED_MERCHANT = ethers.keccak256(ethers.toUtf8Bytes("AUTHORIZED_MERCHANT"));
@@ -20,14 +21,17 @@ describe("PurposeBoundRupee", function () {
   const DELIVERY_PROOF_HASH = ethers.keccak256(ethers.toUtf8Bytes(DELIVERY_PROOF));
 
   beforeEach(async function () {
-    [admin, merchant, buyer, unauthorized] = await ethers.getSigners();
+    [admin, merchant, buyer, unauthorized, oracle] = await ethers.getSigners();
 
     const PurposeBoundRupee = await ethers.getContractFactory("PurposeBoundRupee");
     token = await PurposeBoundRupee.deploy(admin.address);
     await token.waitForDeployment();
 
-    // Setup roles
-    await token.grantRole(AUTHORIZED_MERCHANT, merchant.address);
+    // Setup roles using gas-optimized bitmap
+    await token.setAuthorizedMerchant(merchant.address, true);
+
+    // Set logistics oracle
+    await token.setLogisticsOracle(oracle.address);
 
     // Mint tokens to buyer
     await token.mint(buyer.address, MINT_AMOUNT);
@@ -47,7 +51,8 @@ describe("PurposeBoundRupee", function () {
       expect(await token.hasRole(CENTRAL_AUTHORITY, admin.address)).to.be.true;
     });
 
-    it("should assign AUTHORIZED_MERCHANT to merchant", async function () {
+    it("should set merchant via gas-optimized bitmap AND AccessControl role", async function () {
+      expect(await token.isAuthorizedMerchant(merchant.address)).to.be.true;
       expect(await token.hasRole(AUTHORIZED_MERCHANT, merchant.address)).to.be.true;
     });
 
@@ -61,6 +66,18 @@ describe("PurposeBoundRupee", function () {
       await expect(
         token.connect(buyer).setPurposeBound(buyer.address, true)
       ).to.be.reverted;
+    });
+
+    it("should emit MerchantAuthorizationChanged event", async function () {
+      await expect(token.setAuthorizedMerchant(unauthorized.address, true))
+        .to.emit(token, "MerchantAuthorizationChanged")
+        .withArgs(unauthorized.address, true);
+    });
+
+    it("should revoke merchant authorization", async function () {
+      await token.setAuthorizedMerchant(merchant.address, false);
+      expect(await token.isAuthorizedMerchant(merchant.address)).to.be.false;
+      expect(await token.hasRole(AUTHORIZED_MERCHANT, merchant.address)).to.be.false;
     });
   });
 
@@ -84,10 +101,10 @@ describe("PurposeBoundRupee", function () {
   });
 
   // ──────────────────────────────────────────────
-  //  Purpose-Bound Transfer Tests
+  //  Purpose-Bound Transfer Tests (Gas-Optimized)
   // ──────────────────────────────────────────────
 
-  describe("Purpose-Bound Transfers", function () {
+  describe("Purpose-Bound Transfers (Optimized Bitmap)", function () {
     beforeEach(async function () {
       await token.setPurposeBound(buyer.address, true);
     });
@@ -197,7 +214,7 @@ describe("PurposeBoundRupee", function () {
     });
 
     it("should reject escrow to self", async function () {
-      await token.grantRole(AUTHORIZED_MERCHANT, buyer.address);
+      await token.setAuthorizedMerchant(buyer.address, true);
       await expect(
         token.connect(buyer).createEscrow(
           buyer.address,
@@ -226,7 +243,11 @@ describe("PurposeBoundRupee", function () {
     });
   });
 
-  describe("Escrow — Confirm Delivery", function () {
+  // ──────────────────────────────────────────────
+  //  2-of-3 Multi-Sig Oracle Settlement Tests
+  // ──────────────────────────────────────────────
+
+  describe("Escrow — 2-of-3 Multi-Sig Confirm Delivery", function () {
     beforeEach(async function () {
       await token.connect(buyer).createEscrow(
         merchant.address,
@@ -236,17 +257,51 @@ describe("PurposeBoundRupee", function () {
       );
     });
 
-    it("should release funds to seller on valid proof", async function () {
+    it("should emit DeliveryVoteSubmitted on first confirmation", async function () {
       await expect(
         token.connect(merchant).confirmDelivery(0, DELIVERY_PROOF)
-      ).to.emit(token, "DeliveryConfirmed")
-        .withArgs(0, merchant.address, ESCROW_AMOUNT);
+      ).to.emit(token, "DeliveryVoteSubmitted")
+        .withArgs(0, merchant.address, 1, 2);
 
-      expect(await token.balanceOf(merchant.address)).to.equal(ESCROW_AMOUNT);
+      // Should NOT be completed yet (only 1 of 2)
+      const escrow = await token.getEscrow(0);
+      expect(escrow.isCompleted).to.be.false;
     });
 
-    it("should mark escrow as completed", async function () {
+    it("should settle escrow when 2-of-3 consensus is reached (merchant + oracle)", async function () {
+      // First vote: merchant
       await token.connect(merchant).confirmDelivery(0, DELIVERY_PROOF);
+
+      // Second vote: oracle → triggers settlement
+      await expect(
+        token.connect(oracle).confirmDelivery(0, DELIVERY_PROOF)
+      ).to.emit(token, "DeliveryConfirmed");
+
+      const escrow = await token.getEscrow(0);
+      expect(escrow.isCompleted).to.be.true;
+    });
+
+    it("should settle escrow when 2-of-3 consensus is reached (buyer + merchant)", async function () {
+      // First vote: buyer
+      await token.connect(buyer).confirmDelivery(0, DELIVERY_PROOF);
+
+      // Second vote: merchant → triggers settlement
+      await expect(
+        token.connect(merchant).confirmDelivery(0, DELIVERY_PROOF)
+      ).to.emit(token, "DeliveryConfirmed");
+
+      const escrow = await token.getEscrow(0);
+      expect(escrow.isCompleted).to.be.true;
+    });
+
+    it("should settle escrow when 2-of-3 consensus is reached (buyer + oracle)", async function () {
+      // First vote: buyer
+      await token.connect(buyer).confirmDelivery(0, DELIVERY_PROOF);
+
+      // Second vote: oracle → triggers settlement
+      await expect(
+        token.connect(oracle).confirmDelivery(0, DELIVERY_PROOF)
+      ).to.emit(token, "DeliveryConfirmed");
 
       const escrow = await token.getEscrow(0);
       expect(escrow.isCompleted).to.be.true;
@@ -258,20 +313,53 @@ describe("PurposeBoundRupee", function () {
       ).to.be.revertedWithCustomError(token, "InvalidDeliveryProof");
     });
 
-    it("should reject non-seller caller", async function () {
+    it("should reject unauthorized caller", async function () {
       await expect(
-        token.connect(buyer).confirmDelivery(0, DELIVERY_PROOF)
-      ).to.be.revertedWithCustomError(token, "NotEscrowSeller");
+        token.connect(unauthorized).confirmDelivery(0, DELIVERY_PROOF)
+      ).to.be.revertedWithCustomError(token, "NotAuthorizedConfirmer");
     });
 
-    it("should reject confirming already completed escrow", async function () {
+    it("should reject double-voting from same address", async function () {
       await token.connect(merchant).confirmDelivery(0, DELIVERY_PROOF);
 
       await expect(
         token.connect(merchant).confirmDelivery(0, DELIVERY_PROOF)
+      ).to.be.revertedWithCustomError(token, "AlreadyConfirmed");
+    });
+
+    it("should reject confirming already completed escrow", async function () {
+      // Settle via 2 votes
+      await token.connect(merchant).confirmDelivery(0, DELIVERY_PROOF);
+      await token.connect(oracle).confirmDelivery(0, DELIVERY_PROOF);
+
+      // Third vote should fail
+      await expect(
+        token.connect(buyer).confirmDelivery(0, DELIVERY_PROOF)
       ).to.be.revertedWithCustomError(token, "EscrowAlreadyCompleted");
     });
+
+    it("should track confirmation count correctly", async function () {
+      expect(await token.confirmationCount(0)).to.equal(0);
+
+      await token.connect(merchant).confirmDelivery(0, DELIVERY_PROOF);
+      expect(await token.confirmationCount(0)).to.equal(1);
+
+      await token.connect(oracle).confirmDelivery(0, DELIVERY_PROOF);
+      expect(await token.confirmationCount(0)).to.equal(2);
+    });
+
+    it("should track individual confirmation status", async function () {
+      expect(await token.getConfirmationStatus(0, merchant.address)).to.be.false;
+
+      await token.connect(merchant).confirmDelivery(0, DELIVERY_PROOF);
+      expect(await token.getConfirmationStatus(0, merchant.address)).to.be.true;
+      expect(await token.getConfirmationStatus(0, oracle.address)).to.be.false;
+    });
   });
+
+  // ──────────────────────────────────────────────
+  //  Escrow Refund Tests
+  // ──────────────────────────────────────────────
 
   describe("Escrow — Refund", function () {
     beforeEach(async function () {
@@ -311,6 +399,7 @@ describe("PurposeBoundRupee", function () {
 
     it("should reject refund on completed escrow", async function () {
       await token.connect(merchant).confirmDelivery(0, DELIVERY_PROOF);
+      await token.connect(oracle).confirmDelivery(0, DELIVERY_PROOF);
       await time.increase(LOCK_DURATION + 1);
 
       await expect(

@@ -2,23 +2,25 @@ import { ethers } from "hardhat";
 
 /**
  * Deployment script for PurposeBoundRupee contract.
- * Sets up all three named users:
- *   - Account #0 (Admin/Central Authority) — deployer
+ * Sets up all three named users and the logistics oracle:
+ *   - Account #0 (Admin/Central Authority) — deployer & tax collector
  *   - Account #1 (Prem / Merchant) — authorized merchant
  *   - Account #2 (Bharath / Client) — buyer with purpose-bound tokens
- *   - Account #3 (Kanish / Vendor) — observer
+ *   - Account #3 (Kanish / Vendor) — supply chain observer & fee collector
+ *   - Account #4 (Logistics Oracle) — simulated e-Way Bill API signer
  */
 async function main() {
-  const [admin, merchant, buyer, vendor] = await ethers.getSigners();
+  const [admin, merchant, buyer, vendor, oracle] = await ethers.getSigners();
 
   console.log("╔══════════════════════════════════════════════════════════╗");
-  console.log("║       Purpose-Bound Rupee — Contract Deployment        ║");
+  console.log("║    P.A.C.T. — Purpose-Bound Rupee Deployment (v2)     ║");
   console.log("╚══════════════════════════════════════════════════════════╝");
   console.log("");
   console.log("  Admin (Central Authority): ", admin.address);
   console.log("  Prem  (Merchant/Supplier): ", merchant.address);
   console.log("  Bharath (Client/Buyer):    ", buyer.address);
   console.log("  Kanish  (Vendor/Observer): ", vendor.address);
+  console.log("  Oracle (e-Way Bill API):   ", oracle.address);
   console.log("");
 
   // Deploy the contract
@@ -29,16 +31,20 @@ async function main() {
   console.log("  ✅ Contract deployed at:      ", contractAddress);
   console.log("");
 
-  // Grant AUTHORIZED_MERCHANT role to Prem
-  const AUTHORIZED_MERCHANT = await token.AUTHORIZED_MERCHANT();
-  const grant1 = await token.grantRole(AUTHORIZED_MERCHANT, merchant.address);
-  await grant1.wait();
+  // Authorize Prem as merchant (uses gas-optimized bitmap + AccessControl role)
+  const auth1 = await token.setAuthorizedMerchant(merchant.address, true);
+  await auth1.wait();
   console.log("  ✅ AUTHORIZED_MERCHANT → Prem:  ", merchant.address);
 
-  // Grant AUTHORIZED_MERCHANT role to Kanish (so he can also observe/receive)
-  const grant2 = await token.grantRole(AUTHORIZED_MERCHANT, vendor.address);
-  await grant2.wait();
+  // Authorize Kanish as merchant (so he can receive vendor fee distributions)
+  const auth2 = await token.setAuthorizedMerchant(vendor.address, true);
+  await auth2.wait();
   console.log("  ✅ AUTHORIZED_MERCHANT → Kanish: ", vendor.address);
+
+  // Set the logistics oracle (simulated e-Way Bill signer — Account #4)
+  const setOracle = await token.setLogisticsOracle(oracle.address);
+  await setOracle.wait();
+  console.log("  ✅ Logistics Oracle set:        ", oracle.address);
 
   // Mint tokens to Bharath (Client) — 10,000 PBR
   const mintAmount = ethers.parseEther("10000");
@@ -64,6 +70,10 @@ async function main() {
   console.log("│  Prem (Merchant):   prem / prem123                     │");
   console.log("│  Kanish (Vendor):   kanish / kanish123                 │");
   console.log("├──────────────────────────────────────────────────────────┤");
+  console.log("│  MULTI-SIG ORACLE (2-of-3 Consensus)                   │");
+  console.log("│  Confirmers: Buyer + Seller + Logistics Oracle         │");
+  console.log("│  Oracle:    ", oracle.address, "  │");
+  console.log("├──────────────────────────────────────────────────────────┤");
   console.log(`│  CONTRACT = "${contractAddress}"`);
   console.log("│  CHAIN_ID = 31337 · RPC = http://127.0.0.1:8545        │");
   console.log("└──────────────────────────────────────────────────────────┘");
@@ -74,6 +84,7 @@ async function main() {
   console.log("  Prem:    ", merchant.address);
   console.log("  Bharath: ", buyer.address);
   console.log("  Kanish:  ", vendor.address);
+  console.log("  Oracle:  ", oracle.address);
 }
 
 main().catch((error) => {

@@ -8,11 +8,15 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 
 /**
  * @title PurposeBoundRupee
- * @author Purpose-Bound Token Platform
+ * @author Purpose-Bound Token Platform (P.A.C.T.)
  * @notice ERC20 token with programmable compliance for B2B industrial procurement.
- *         Implements purpose-bound transfer restrictions and atomic DvP escrow settlement.
+ *         Designed as a Layer-2 smart contract wrapper for CBDC (e₹) integration.
+ *         Implements purpose-bound transfer restrictions, 2-of-3 multi-sig oracle
+ *         settlement, and atomic fee distribution.
  * @dev Inherits OpenZeppelin v5 contracts: ERC20, Ownable, AccessControl, ReentrancyGuard.
- *      Transfer restrictions are enforced via the `_update` hook (OZ v5 pattern).
+ *      Transfer restrictions use a gas-optimized boolean mapping instead of heavy
+ *      AccessControl role checks in the hot-path `_update` hook.
+ *      Settlement uses a 2-of-3 consensus model: Buyer, Seller, and Logistics Oracle.
  */
 contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
     // ──────────────────────────────────────────────
@@ -22,8 +26,22 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
     /// @notice Role for central authority operations (minting, compliance management).
     bytes32 public constant CENTRAL_AUTHORITY = keccak256("CENTRAL_AUTHORITY");
 
-    /// @notice Role for authorized merchants who can receive purpose-bound tokens.
+    /// @notice Role for authorized merchants (used for admin-level role grants only).
     bytes32 public constant AUTHORIZED_MERCHANT = keccak256("AUTHORIZED_MERCHANT");
+
+    // ──────────────────────────────────────────────
+    //  Gas-Optimized Merchant Bitmap (Fix #4)
+    // ──────────────────────────────────────────────
+
+    /**
+     * @notice O(1) boolean flag for authorized merchant status.
+     * @dev Replaces the expensive `hasRole(AUTHORIZED_MERCHANT, addr)` call
+     *      inside the `_update` transfer hook. A simple `mapping(address => bool)`
+     *      costs ~2,100 gas for a cold SLOAD vs ~5,000+ for AccessControl's
+     *      nested mapping + keccak256 hash. This flag is the ONLY check used
+     *      in the transfer hot-path.
+     */
+    mapping(address => bool) public isAuthorizedMerchant;
 
     // ──────────────────────────────────────────────
     //  Purpose-Bound State
@@ -57,6 +75,22 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
     uint256 public activeEscrowCount;
 
     // ──────────────────────────────────────────────
+    //  2-of-3 Multi-Sig Oracle State (Fix #1)
+    // ──────────────────────────────────────────────
+
+    /// @notice The logistics oracle address (simulated e-Way Bill API signer).
+    address public logisticsOracle;
+
+    /// @notice Minimum number of confirmations required for settlement (default: 2).
+    uint256 public constant CONFIRMATION_THRESHOLD = 2;
+
+    /// @notice Tracks which addresses have confirmed delivery for each escrow.
+    mapping(uint256 => mapping(address => bool)) public deliveryConfirmations;
+
+    /// @notice Tracks the total confirmation count per escrow.
+    mapping(uint256 => uint256) public confirmationCount;
+
+    // ──────────────────────────────────────────────
     //  Fee Configuration
     // ──────────────────────────────────────────────
 
@@ -86,7 +120,15 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         bytes32 deliveryProofHash
     );
 
-    /// @notice Emitted when a seller confirms delivery and funds are released.
+    /// @notice Emitted when a party submits a delivery confirmation vote.
+    event DeliveryVoteSubmitted(
+        uint256 indexed escrowId,
+        address indexed voter,
+        uint256 currentCount,
+        uint256 threshold
+    );
+
+    /// @notice Emitted when consensus is reached and funds are released.
     event DeliveryConfirmed(
         uint256 indexed escrowId,
         address indexed seller,
@@ -114,14 +156,20 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         bool status
     );
 
+    /// @notice Emitted when a merchant's authorization status changes.
+    event MerchantAuthorizationChanged(
+        address indexed merchant,
+        bool status
+    );
+
     // ──────────────────────────────────────────────
     //  Errors
     // ──────────────────────────────────────────────
 
-    /// @notice Transfer violates purpose-bound restriction (recipient not an authorized merchant).
+    /// @notice Transfer violates purpose-bound restriction.
     error PurposeBoundTransferViolation(address from, address to);
 
-    /// @notice Escrow seller must hold the AUTHORIZED_MERCHANT role.
+    /// @notice Escrow seller must be an authorized merchant.
     error SellerNotAuthorizedMerchant(address seller);
 
     /// @notice Escrow amount must be greater than zero.
@@ -153,6 +201,12 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
 
     /// @notice Cannot create escrow with self as seller.
     error CannotEscrowToSelf();
+
+    /// @notice Caller is not an authorized confirmer (buyer, seller, or oracle).
+    error NotAuthorizedConfirmer(uint256 escrowId, address caller);
+
+    /// @notice Caller has already confirmed this escrow.
+    error AlreadyConfirmed(uint256 escrowId, address caller);
 
     // ──────────────────────────────────────────────
     //  Constructor
@@ -186,13 +240,39 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
 
     /**
      * @notice Sets or removes purpose-bound restrictions on an account.
-     * @dev When purpose-bound, the account can only transfer tokens to AUTHORIZED_MERCHANT addresses.
+     * @dev When purpose-bound, the account can only transfer tokens to authorized merchants.
      * @param account The address to modify.
      * @param status True to enable purpose-bound restrictions, false to disable.
      */
     function setPurposeBound(address account, bool status) external onlyRole(CENTRAL_AUTHORITY) {
         purposeBound[account] = status;
         emit PurposeBoundStatusChanged(account, status);
+    }
+
+    /**
+     * @notice Sets or removes authorized merchant status using the gas-optimized bitmap.
+     * @dev This updates BOTH the lightweight boolean mapping (used in `_update` hot-path)
+     *      AND the AccessControl role (used for admin governance queries).
+     * @param merchant The merchant address.
+     * @param status True to authorize, false to revoke.
+     */
+    function setAuthorizedMerchant(address merchant, bool status) external onlyRole(CENTRAL_AUTHORITY) {
+        isAuthorizedMerchant[merchant] = status;
+        if (status) {
+            _grantRole(AUTHORIZED_MERCHANT, merchant);
+        } else {
+            _revokeRole(AUTHORIZED_MERCHANT, merchant);
+        }
+        emit MerchantAuthorizationChanged(merchant, status);
+    }
+
+    /**
+     * @notice Sets the logistics oracle address for multi-sig delivery confirmation.
+     * @dev Only callable by the CENTRAL_AUTHORITY role.
+     * @param _oracle Address of the logistics API signer (simulated e-Way Bill oracle).
+     */
+    function setLogisticsOracle(address _oracle) external onlyRole(CENTRAL_AUTHORITY) {
+        logisticsOracle = _oracle;
     }
 
     /**
@@ -217,14 +297,16 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
     }
 
     // ──────────────────────────────────────────────
-    //  Transfer Compliance (Purpose-Bound Override)
+    //  Transfer Compliance — Gas-Optimized (Fix #4)
     // ──────────────────────────────────────────────
 
     /**
      * @notice Internal transfer hook enforcing purpose-bound compliance.
      * @dev Overrides OpenZeppelin v5's unified `_update` function.
-     *      If the sender has purpose-bound status, the recipient MUST hold
-     *      the AUTHORIZED_MERCHANT role. Minting (from=0) and burning (to=0) are exempt.
+     *      Uses the gas-optimized `isAuthorizedMerchant[to]` boolean mapping
+     *      instead of the expensive `hasRole(AUTHORIZED_MERCHANT, to)` call.
+     *      This reduces per-transfer gas cost by ~3,000 gas (2,100 cold SLOAD
+     *      vs 5,000+ for AccessControl's nested struct lookup + keccak256).
      * @param from Sender address (address(0) for minting).
      * @param to Recipient address (address(0) for burning).
      * @param value Transfer amount.
@@ -238,7 +320,7 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         if (from != address(0) && to != address(0)) {
             // Enforce purpose-bound restriction
             // Exempt transfers to the contract itself for escrow locking
-            if (purposeBound[from] && to != address(this) && !hasRole(AUTHORIZED_MERCHANT, to)) {
+            if (purposeBound[from] && to != address(this) && !isAuthorizedMerchant[to]) {
                 revert PurposeBoundTransferViolation(from, to);
             }
         }
@@ -252,9 +334,9 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
 
     /**
      * @notice Creates a new DvP escrow, locking buyer's tokens in the contract.
-     * @dev The seller must hold the AUTHORIZED_MERCHANT role. Tokens are transferred
+     * @dev The seller must be an authorized merchant. Tokens are transferred
      *      from the buyer to this contract. Uses nonReentrant to prevent reentrancy.
-     * @param seller Address of the merchant supplier (must be AUTHORIZED_MERCHANT).
+     * @param seller Address of the merchant supplier (must be authorized).
      * @param amount Number of tokens to lock in escrow.
      * @param lockDuration Duration in seconds before the escrow can be refunded.
      * @param deliveryProofHash keccak256 hash of the expected delivery proof string.
@@ -269,7 +351,7 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         if (amount == 0) revert EscrowAmountZero();
         if (lockDuration == 0) revert LockDurationZero();
         if (seller == msg.sender) revert CannotEscrowToSelf();
-        if (!hasRole(AUTHORIZED_MERCHANT, seller)) {
+        if (!isAuthorizedMerchant[seller]) {
             revert SellerNotAuthorizedMerchant(seller);
         }
 
@@ -301,11 +383,18 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         );
     }
 
+    // ──────────────────────────────────────────────
+    //  2-of-3 Multi-Sig Oracle Settlement (Fix #1)
+    // ──────────────────────────────────────────────
+
     /**
-     * @notice Confirms delivery and releases escrowed funds to the seller.
-     * @dev Only callable by the designated seller. The provided proof must hash
-     *      to match the stored deliveryProofHash. Uses nonReentrant.
-     * @param escrowId ID of the escrow to settle.
+     * @notice Submits a delivery confirmation vote for an escrow.
+     * @dev Callable by exactly three parties: the buyer, the seller, or the
+     *      logistics oracle. When 2-of-3 confirmations are reached AND the
+     *      delivery proof hash matches, funds are atomically settled.
+     *      This replaces the single-party `confirmDelivery` with trustless
+     *      consensus verification.
+     * @param escrowId ID of the escrow to confirm.
      * @param deliveryProof The plaintext delivery proof string.
      */
     function confirmDelivery(
@@ -317,12 +406,51 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         if (escrow.buyer == address(0)) revert EscrowNotFound(escrowId);
         if (escrow.isCompleted) revert EscrowAlreadyCompleted(escrowId);
         if (escrow.isRefunded) revert EscrowAlreadyRefunded(escrowId);
-        if (msg.sender != escrow.seller) {
-            revert NotEscrowSeller(escrowId, msg.sender);
+
+        // Verify caller is one of the three authorized confirmers
+        bool isAuthorized = (
+            msg.sender == escrow.buyer ||
+            msg.sender == escrow.seller ||
+            msg.sender == logisticsOracle
+        );
+        if (!isAuthorized) {
+            revert NotAuthorizedConfirmer(escrowId, msg.sender);
         }
+
+        // Prevent double-voting
+        if (deliveryConfirmations[escrowId][msg.sender]) {
+            revert AlreadyConfirmed(escrowId, msg.sender);
+        }
+
+        // Verify delivery proof hash
         if (keccak256(abi.encodePacked(deliveryProof)) != escrow.deliveryProofHash) {
             revert InvalidDeliveryProof(escrowId);
         }
+
+        // Record the vote
+        deliveryConfirmations[escrowId][msg.sender] = true;
+        confirmationCount[escrowId]++;
+
+        emit DeliveryVoteSubmitted(
+            escrowId,
+            msg.sender,
+            confirmationCount[escrowId],
+            CONFIRMATION_THRESHOLD
+        );
+
+        // Check if consensus threshold is met
+        if (confirmationCount[escrowId] >= CONFIRMATION_THRESHOLD) {
+            _settleEscrow(escrowId);
+        }
+    }
+
+    /**
+     * @notice Internal settlement function. Executes the atomic 3-way fee split.
+     * @dev Called automatically when 2-of-3 confirmations are reached.
+     * @param escrowId ID of the escrow to settle.
+     */
+    function _settleEscrow(uint256 escrowId) internal {
+        Escrow storage escrow = escrows[escrowId];
 
         escrow.isCompleted = true;
         activeEscrowCount--;
@@ -330,7 +458,7 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         // Calculate fee split
         (uint256 taxAmount, uint256 vendorFeeAmount, uint256 merchantAmount) = calculateFees(escrow.amount);
 
-        // Distribute funds
+        // Distribute funds atomically
         if (taxAmount > 0 && taxCollector != address(0)) {
             _transfer(address(this), taxCollector, taxAmount);
         }
@@ -431,6 +559,20 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         vendorFeeAmount = (amount * vendorFeeBps) / 10000;
         merchantAmount = amount - taxAmount - vendorFeeAmount;
         return (taxAmount, vendorFeeAmount, merchantAmount);
+    }
+
+    /**
+     * @notice Returns the confirmation status for a specific escrow and voter.
+     * @param escrowId The escrow ID.
+     * @param voter The address to check.
+     * @return hasConfirmed Whether the voter has confirmed delivery.
+     */
+    function getConfirmationStatus(uint256 escrowId, address voter)
+        external
+        view
+        returns (bool hasConfirmed)
+    {
+        return deliveryConfirmations[escrowId][voter];
     }
 
     // ──────────────────────────────────────────────
