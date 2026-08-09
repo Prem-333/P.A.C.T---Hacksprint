@@ -192,7 +192,8 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         // Skip compliance check for minting and burning operations
         if (from != address(0) && to != address(0)) {
             // Enforce purpose-bound restriction
-            if (purposeBound[from] && !hasRole(AUTHORIZED_MERCHANT, to)) {
+            // Exempt transfers to the contract itself for escrow locking
+            if (purposeBound[from] && to != address(this) && !hasRole(AUTHORIZED_MERCHANT, to)) {
                 revert PurposeBoundTransferViolation(from, to);
             }
         }
