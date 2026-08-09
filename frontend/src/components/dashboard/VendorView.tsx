@@ -8,6 +8,8 @@
  */
 
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { LiveActivityFeed } from "@/components/shared/LiveActivityFeed";
+import { UsersIcon, ListIcon, BarChartIcon, BuildingIcon, PackageIcon, EyeIcon, ActivityIcon } from "@/components/ui/Icons";
 
 interface BalanceData {
   totalSupply: string;
@@ -36,10 +38,10 @@ interface VendorViewProps {
   }[];
 }
 
-const roleIcons: Record<string, string> = {
-  client: "🏢",
-  merchant: "📦",
-  vendor: "📊",
+const roleIcons: Record<string, React.ReactNode> = {
+  client: <BuildingIcon size={20} className="text-blue-500" />,
+  merchant: <PackageIcon size={20} className="text-emerald-500" />,
+  vendor: <EyeIcon size={20} className="text-purple-500" />,
 };
 
 const roleLabels: Record<string, string> = {
@@ -54,7 +56,7 @@ export function VendorView({ balances, escrows, transactions }: VendorViewProps)
       {/* All Users Balances */}
       <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-base">👥</span>
+          <span className="text-[var(--color-primary)]"><UsersIcon size={20} /></span>
           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
             All Users — Live Balances
           </h3>
@@ -115,7 +117,7 @@ export function VendorView({ balances, escrows, transactions }: VendorViewProps)
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="text-base">📑</span>
+            <span className="text-[var(--color-text-secondary)]"><ListIcon size={20} /></span>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
               All Escrows — Supply Chain Audit
             </h3>
@@ -127,7 +129,7 @@ export function VendorView({ balances, escrows, transactions }: VendorViewProps)
 
         {escrows.length === 0 ? (
           <div className="text-center py-10 border border-dashed border-[var(--color-border)] rounded-lg">
-            <div className="text-2xl mb-2 opacity-30">📑</div>
+            <div className="flex justify-center mb-2 opacity-30 text-[var(--color-text-muted)]"><ListIcon size={32} /></div>
             <p className="text-sm text-[var(--color-text-primary)] font-medium mb-1">
               All Escrows — Supply Chain Audit
             </p>
@@ -190,13 +192,13 @@ export function VendorView({ balances, escrows, transactions }: VendorViewProps)
         )}
       </div>
 
-      {/* Transaction History */}
+      {/* Transaction History (Live Feed) */}
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="text-base">📊</span>
+            <span className="text-[var(--color-primary)]"><ActivityIcon size={20} /></span>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-              Transaction History
+              Live Network Activity
             </h3>
           </div>
           <span className="text-xs text-[var(--color-text-muted)]">
@@ -204,50 +206,7 @@ export function VendorView({ balances, escrows, transactions }: VendorViewProps)
           </span>
         </div>
 
-        {transactions.length === 0 ? (
-          <div className="text-center py-6">
-            <p className="text-sm text-[var(--color-text-muted)]">
-              No transactions recorded yet.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Tx Hash</th>
-                  <th>Type</th>
-                  <th>From</th>
-                  <th>To</th>
-                  <th>Amount</th>
-                  <th>Block</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((tx, i) => (
-                  <tr key={tx.txHash + i}>
-                    <td className="font-mono text-[var(--color-text-accent)] text-xs">
-                      {tx.txHash.slice(0, 10)}...
-                    </td>
-                    <td>
-                      <span className="text-xs px-2 py-0.5 rounded bg-[var(--color-primary-light)] text-[var(--color-primary)] font-medium">
-                        {tx.type}
-                      </span>
-                    </td>
-                    <td className="text-sm">{tx.from}</td>
-                    <td className="text-sm">{tx.to}</td>
-                    <td className="font-semibold">{tx.amount} PBR</td>
-                    <td className="font-mono text-xs">#{tx.blockNumber}</td>
-                    <td className="text-xs text-[var(--color-text-muted)]">
-                      {new Date(tx.timestamp).toLocaleTimeString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <LiveActivityFeed transactions={transactions} />
       </div>
     </div>
   );
