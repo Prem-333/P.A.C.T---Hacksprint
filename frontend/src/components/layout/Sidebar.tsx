@@ -14,36 +14,33 @@ interface SidebarProps {
 
 const roleConfig = {
   client: {
-    icon: "🏭",
     label: "Client Panel",
     description: "MSME Buyer",
-    color: "from-blue-500/20 to-indigo-500/10 border-blue-500/30",
     items: [
-      { icon: "💰", label: "Token Balance" },
-      { icon: "📝", label: "Create Escrow" },
-      { icon: "📋", label: "Active Escrows" },
+      { icon: "📊", label: "Dashboard" },
+      { icon: "📑", label: "Escrows" },
+      { icon: "↔", label: "Transactions" },
+      { icon: "📋", label: "Audit Log" },
     ],
   },
   merchant: {
-    icon: "📦",
     label: "Merchant Panel",
     description: "Supplier",
-    color: "from-emerald-500/20 to-teal-500/10 border-emerald-500/30",
     items: [
-      { icon: "💰", label: "Merchant Balance" },
-      { icon: "📥", label: "Incoming Escrows" },
-      { icon: "✅", label: "Confirm Delivery" },
+      { icon: "📊", label: "Dashboard" },
+      { icon: "📑", label: "Escrows" },
+      { icon: "↔", label: "Transactions" },
+      { icon: "📋", label: "Audit Log" },
     ],
   },
   vendor: {
-    icon: "🔍",
     label: "Vendor Panel",
     description: "Observer",
-    color: "from-violet-500/20 to-purple-500/10 border-violet-500/30",
     items: [
-      { icon: "👥", label: "All Users" },
-      { icon: "🔗", label: "All Escrows" },
-      { icon: "📊", label: "Transaction Audit" },
+      { icon: "📊", label: "Dashboard" },
+      { icon: "📑", label: "Escrows" },
+      { icon: "↔", label: "Transactions" },
+      { icon: "📋", label: "Audit Log" },
     ],
   },
 };
@@ -52,18 +49,18 @@ export function Sidebar({ activeRole, userName }: SidebarProps) {
   const config = roleConfig[activeRole];
 
   return (
-    <aside className="w-[260px] h-screen flex flex-col glass-card-elevated border-r border-[var(--color-border)] rounded-none sticky top-0">
+    <aside className="w-[240px] h-screen flex flex-col bg-white border-r border-[var(--color-border)] sticky top-0">
       {/* Brand Header */}
-      <div className="px-5 py-6 border-b border-[var(--color-border)]">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <span className="text-white font-bold text-lg">₹</span>
+      <div className="px-5 py-5 border-b border-[var(--color-border)]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-[var(--color-primary)] flex items-center justify-center">
+            <span className="text-white font-semibold text-base">₹</span>
           </div>
           <div>
-            <h1 className="text-sm font-bold text-[var(--color-text-primary)] tracking-tight">
+            <h1 className="text-sm font-semibold text-[var(--color-text-primary)] leading-tight">
               Purpose-Bound
             </h1>
-            <p className="text-[10px] font-medium text-[var(--color-text-accent)] tracking-wider uppercase">
+            <p className="text-[10px] font-medium text-[var(--color-text-muted)] tracking-wide uppercase">
               Rupee Platform
             </p>
           </div>
@@ -71,51 +68,55 @@ export function Sidebar({ activeRole, userName }: SidebarProps) {
       </div>
 
       {/* User Profile Card */}
-      <div className="px-4 py-4">
-        <div
-          className={`p-4 rounded-xl bg-gradient-to-br ${config.color} border`}
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-2xl">{config.icon}</span>
+      <div className="px-4 py-3">
+        <div className="px-3 py-2.5 rounded-lg bg-[var(--color-primary)] text-white">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-medium">
+              {userName.charAt(0)}
+            </div>
             <div>
-              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                {userName}
-              </p>
-              <p className="text-[10px] text-[var(--color-text-muted)]">
-                {config.description}
-              </p>
+              <p className="text-sm font-medium leading-tight">{userName}</p>
+              <p className="text-[10px] opacity-75">{config.description}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation Items (informational) */}
-      <nav className="flex-1 px-3 py-2 space-y-1">
-        <p className="px-3 mb-3 text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-widest">
+      {/* Navigation Items */}
+      <nav className="flex-1 px-3 py-1 space-y-0.5">
+        <p className="px-3 mb-2 text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-widest">
           {config.label}
         </p>
-        {config.items.map((item) => (
+        {config.items.map((item, index) => (
           <div
             key={item.label}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[var(--color-text-secondary)]"
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[0.8125rem] transition-colors ${
+              index === 0
+                ? "bg-[var(--color-primary)] text-white font-medium"
+                : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
+            }`}
           >
-            <span className="text-base">{item.icon}</span>
-            <span className="text-xs font-medium">{item.label}</span>
+            <span className="text-sm w-5 text-center">{item.icon}</span>
+            <span>{item.label}</span>
           </div>
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="px-5 py-4 border-t border-[var(--color-border)]">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="status-dot status-dot-success" />
-          <span className="text-xs text-[var(--color-text-secondary)]">
-            Hardhat Local
-          </span>
+      {/* Bottom actions */}
+      <div className="px-3 pb-3 space-y-0.5">
+        <div className="px-4 py-3 mb-2">
+          <button className="w-full py-2 rounded-lg bg-[var(--color-primary)] text-white text-xs font-medium hover:bg-[var(--color-primary-hover)] transition-colors">
+            Quick Transfer
+          </button>
         </div>
-        <p className="text-[10px] text-[var(--color-text-muted)]">
-          Chain ID: 31337 · Real-time sync: 5s
-        </p>
+        <div className="flex items-center gap-2.5 px-3 py-2 text-[0.8125rem] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)] rounded-lg transition-colors cursor-pointer">
+          <span className="text-sm w-5 text-center">⚙</span>
+          <span>Settings</span>
+        </div>
+        <div className="flex items-center gap-2.5 px-3 py-2 text-[0.8125rem] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)] rounded-lg transition-colors cursor-pointer">
+          <span className="text-sm w-5 text-center">❓</span>
+          <span>Support</span>
+        </div>
       </div>
     </aside>
   );

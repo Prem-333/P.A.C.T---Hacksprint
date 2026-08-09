@@ -15,12 +15,6 @@ interface HeaderProps {
   onLogout: () => void;
 }
 
-const roleColors = {
-  client: "bg-blue-500/10 text-blue-400 border-blue-500/30",
-  merchant: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
-  vendor: "bg-violet-500/10 text-violet-400 border-violet-500/30",
-};
-
 const roleLabels = {
   client: "Client",
   merchant: "Merchant",
@@ -36,46 +30,62 @@ export function Header({
   onLogout,
 }: HeaderProps) {
   return (
-    <header className="h-[72px] border-b border-[var(--color-border)] bg-[var(--color-surface-glass)] backdrop-blur-xl flex items-center justify-between px-6">
-      {/* Left: View Title */}
-      <div>
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] tracking-tight">
-          {viewTitle}
-        </h2>
-        <p className="text-xs text-[var(--color-text-muted)]">
-          {viewDescription}
-        </p>
+    <header className="h-16 border-b border-[var(--color-border)] bg-white flex items-center justify-between px-6">
+      {/* Left: Navigation tabs */}
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-medium text-[var(--color-text-primary)]">
+            {viewTitle}
+          </span>
+        </div>
+        <nav className="flex items-center gap-4 text-[0.8125rem]">
+          <span className="text-[var(--color-primary)] font-medium border-b-2 border-[var(--color-primary)] pb-0.5">
+            Overview
+          </span>
+          <span className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer">
+            Analytics
+          </span>
+          <span className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer">
+            Reports
+          </span>
+        </nav>
       </div>
 
       {/* Right: User Info + Logout */}
       <div className="flex items-center gap-4">
-        {/* Role Badge */}
-        <span
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${roleColors[userRole]}`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-current" />
+        {/* Notifications */}
+        <button className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)] transition-colors">
+          🔔
+        </button>
+
+        {/* Role badge */}
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent-emerald)]" />
           {roleLabels[userRole]}
         </span>
 
         {/* User Info */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div className="text-right">
-            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+            <p className="text-[0.8125rem] font-medium text-[var(--color-text-primary)] leading-tight">
               {userName}
             </p>
             <p className="text-[10px] font-mono text-[var(--color-text-muted)]">
-              {userAddress.slice(0, 8)}...{userAddress.slice(-6)}
+              {userAddress.slice(0, 6)}..{userAddress.slice(-4)}
             </p>
           </div>
-
-          <button
-            id="btn-logout"
-            onClick={onLogout}
-            className="btn-ghost text-xs"
-          >
-            Logout
-          </button>
+          <div className="w-8 h-8 rounded-full bg-[var(--color-surface-subtle)] border border-[var(--color-border)] flex items-center justify-center text-xs font-medium text-[var(--color-text-secondary)]">
+            {userName.charAt(0)}
+          </div>
         </div>
+
+        <button
+          id="btn-logout"
+          onClick={onLogout}
+          className="text-[0.8125rem] text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] font-medium transition-colors"
+        >
+          Logout
+        </button>
       </div>
     </header>
   );
