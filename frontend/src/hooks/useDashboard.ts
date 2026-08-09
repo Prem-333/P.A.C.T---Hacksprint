@@ -15,6 +15,8 @@ export interface UserSession {
 export interface BalanceData {
   totalSupply: string;
   activeEscrows: number;
+  taxBps: number;
+  vendorFeeBps: number;
   users: {
     username: string;
     name: string;

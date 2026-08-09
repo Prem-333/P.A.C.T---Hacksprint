@@ -10,6 +10,7 @@ import {
   getPurposeBoundStatus,
   getTotalSupply,
   getActiveEscrowCount,
+  getFeeConfig,
   USERS,
 } from "@/lib/server/wallet";
 
@@ -17,9 +18,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const [totalSupply, activeEscrows] = await Promise.all([
+    const [totalSupply, activeEscrows, feeConfig] = await Promise.all([
       getTotalSupply(),
       getActiveEscrowCount(),
+      getFeeConfig(),
     ]);
 
     const balances = await Promise.all(
@@ -42,6 +44,8 @@ export async function GET() {
     return NextResponse.json({
       totalSupply,
       activeEscrows,
+      taxBps: feeConfig.taxBps,
+      vendorFeeBps: feeConfig.vendorFeeBps,
       users: balances,
     });
   } catch (error) {
