@@ -1,11 +1,11 @@
 /**
- * @module api/escrow/create
- * @description Creates a new DvP escrow. Only callable by Bharath (Client).
- * POST /api/escrow/create
+ * @module api/escrow/refund
+ * @description Refunds an expired escrow. Only callable by Bharath (Client/Buyer).
+ * POST /api/escrow/refund
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createEscrow, USERS, parseContractError } from "@/lib/server/wallet";
+import { refundEscrow, USERS, getEscrow, parseContractError } from "@/lib/server/wallet";
 import { mapToISO20022 } from "@/lib/iso20022";
 import type { TransactionMetadata, TransactionReceipt } from "@/lib/iso20022";
 import { addTransaction } from "@/lib/server/transactions";
@@ -13,33 +13,30 @@ import { addTransaction } from "@/lib/server/transactions";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { amount, lockDurationHours, deliveryProof } = body;
+    const { escrowId } = body;
 
-    if (!amount || !lockDurationHours || !deliveryProof) {
+    if (escrowId === undefined) {
       return NextResponse.json(
-        { error: "amount, lockDurationHours, and deliveryProof are required" },
+        { error: "escrowId is required" },
         { status: 400 }
       );
     }
 
-    // Prem (Merchant) is the seller
-    const seller = USERS.prem;
+    // Get escrow details before refunding
+    const escrowBefore = await getEscrow(parseInt(escrowId));
 
-    const result = await createEscrow({
-      sellerAddress: seller.address,
-      amount,
-      lockDurationHours: parseFloat(lockDurationHours),
-      deliveryProof,
-    });
+    const result = await refundEscrow(parseInt(escrowId));
 
     // Generate ISO 20022 metadata
     const metadata: TransactionMetadata = {
-      type: "ESCROW_CREATE",
-      from: USERS.bharath.address,
-      to: seller.address,
-      amount,
-      remittanceInfo: `DvP Escrow — Bharath → Prem — Raw material procurement (Lock: ${lockDurationHours}h)`,
+      type: "ESCROW_REFUND",
+      from: USERS.prem.address, // Returning from Escrow/Seller conceptually
+      to: USERS.bharath.address,
+      amount: escrowBefore.amount,
+      escrowId: parseInt(escrowId),
+      remittanceInfo: `Refund issued — Escrow #${escrowId} expired — ${escrowBefore.amount} PBR returned to Bharath`,
     };
+    
     const receipt: TransactionReceipt = {
       blockNumber: BigInt(result.blockNumber),
       blockHash: "0x0" as `0x${string}`,
@@ -49,15 +46,14 @@ export async function POST(request: NextRequest) {
     };
     const iso = mapToISO20022(result.txHash as `0x${string}`, receipt, metadata);
 
-    // Store transaction for history
     addTransaction({
       txHash: result.txHash,
-      type: "ESCROW_CREATE",
-      from: USERS.bharath.name,
-      fromAddress: USERS.bharath.address,
-      to: seller.name,
-      toAddress: seller.address,
-      amount,
+      type: "ESCROW_REFUND",
+      from: "Escrow Contract",
+      fromAddress: "0x0",
+      to: USERS.bharath.name,
+      toAddress: USERS.bharath.address,
+      amount: escrowBefore.amount,
       blockNumber: result.blockNumber,
       timestamp: Date.now(),
       iso20022: iso,
@@ -67,10 +63,11 @@ export async function POST(request: NextRequest) {
       success: true,
       txHash: result.txHash,
       blockNumber: result.blockNumber,
-      message: `Escrow created: ${amount} PBR locked for delivery from Prem`,
+      amount: escrowBefore.amount,
+      message: `Refund successful! ${escrowBefore.amount} PBR returned to you.`,
     });
   } catch (error) {
-    console.error("Escrow creation error:", error);
+    console.error("Refund error:", error);
     const message = parseContractError(error);
     return NextResponse.json(
       { error: message },

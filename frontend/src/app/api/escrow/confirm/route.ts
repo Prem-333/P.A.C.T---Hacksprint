@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { confirmDelivery, USERS, getEscrow } from "@/lib/server/wallet";
+import { confirmDelivery, USERS, getEscrow, parseContractError, calculateFees } from "@/lib/server/wallet";
 import { mapToISO20022 } from "@/lib/iso20022";
 import type { TransactionMetadata, TransactionReceipt } from "@/lib/iso20022";
 import { addTransaction } from "@/lib/server/transactions";
@@ -24,6 +24,9 @@ export async function POST(request: NextRequest) {
 
     // Get escrow details before confirming
     const escrowBefore = await getEscrow(parseInt(escrowId));
+    
+    // Calculate fees to include in the response
+    const feeBreakdown = await calculateFees(escrowBefore.amountRaw);
 
     const result = await confirmDelivery({
       escrowId: parseInt(escrowId),
@@ -67,13 +70,14 @@ export async function POST(request: NextRequest) {
       txHash: result.txHash,
       blockNumber: result.blockNumber,
       amount: escrowBefore.amount,
-      message: `Delivery confirmed! ${escrowBefore.amount} PBR released to Prem`,
+      feeBreakdown,
+      message: `Delivery confirmed! ${feeBreakdown.merchantAmount} PBR released to Prem after fees.`,
     });
   } catch (error) {
     console.error("Delivery confirmation error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const message = parseContractError(error);
     return NextResponse.json(
-      { error: `Failed to confirm delivery: ${message}` },
+      { error: message },
       { status: 500 }
     );
   }
