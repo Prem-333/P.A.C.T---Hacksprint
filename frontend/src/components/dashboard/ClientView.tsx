@@ -9,6 +9,9 @@
 
 import { useState, useCallback } from "react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { EscrowTimeline } from "@/components/shared/EscrowTimeline";
+import { useToast } from "@/components/ui/Toast";
+import { SendIcon, ListIcon, InfoIcon, ShieldCheckIcon, RefreshCwIcon, UserIcon, ClockIcon } from "@/components/ui/Icons";
 
 interface ClientViewProps {
   balance: string;
@@ -25,20 +28,24 @@ export function ClientView({
   escrows,
   onRefresh,
 }: ClientViewProps) {
+  const { toast } = useToast();
   const [amount, setAmount] = useState("");
   const [lockDuration, setLockDuration] = useState("1");
   const [deliveryProof, setDeliveryProof] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-  const [result, setResult] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
+  const [refundingId, setRefundingId] = useState<number | null>(null);
 
   const handleCreateEscrow = useCallback(async () => {
-    if (!amount || !deliveryProof) return;
+    if (!amount || !deliveryProof) {
+      toast({
+        type: "error",
+        message: "Missing fields",
+        description: "Please enter amount and delivery proof.",
+      });
+      return;
+    }
 
     setIsCreating(true);
-    setResult(null);
 
     try {
       const res = await fetch("/api/escrow/create", {
@@ -53,20 +60,67 @@ export function ClientView({
       const data = await res.json();
 
       if (res.ok) {
-        setResult({ success: true, message: data.message });
+        toast({
+          type: "success",
+          message: "Escrow Created",
+          description: data.message,
+        });
         setAmount("");
         setDeliveryProof("");
         setLockDuration("1");
         onRefresh();
       } else {
-        setResult({ success: false, message: data.error });
+        toast({
+          type: "error",
+          message: "Failed to create escrow",
+          description: data.error,
+        });
       }
     } catch {
-      setResult({ success: false, message: "Network error" });
+      toast({
+        type: "error",
+        message: "Network Error",
+        description: "Failed to connect to the server.",
+      });
     } finally {
       setIsCreating(false);
     }
-  }, [amount, lockDuration, deliveryProof, onRefresh]);
+  }, [amount, lockDuration, deliveryProof, onRefresh, toast]);
+
+  const handleRefund = useCallback(async (escrowId: number) => {
+    setRefundingId(escrowId);
+    try {
+      const res = await fetch("/api/escrow/refund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ escrowId }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        toast({
+          type: "success",
+          message: "Refund Successful",
+          description: data.message,
+        });
+        onRefresh();
+      } else {
+        toast({
+          type: "error",
+          message: "Refund Failed",
+          description: data.error,
+        });
+      }
+    } catch {
+      toast({
+        type: "error",
+        message: "Network Error",
+        description: "Failed to connect to the server.",
+      });
+    } finally {
+      setRefundingId(null);
+    }
+  }, [onRefresh, toast]);
 
   // Filter escrows where Bharath is the buyer
   const myEscrows = escrows.filter(
@@ -109,7 +163,7 @@ export function ClientView({
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
-            <span className="text-base">▶</span>
+            <span className="text-[var(--color-primary)]"><SendIcon size={20} /></span>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
               Send Payment to Prem (Merchant)
             </h3>
@@ -163,9 +217,10 @@ export function ClientView({
           </div>
         </div>
 
-        <div className="mt-3 px-3 py-2.5 rounded-lg bg-blue-50 border border-blue-200">
+        <div className="mt-3 flex gap-2.5 items-start px-3 py-2.5 rounded-lg bg-blue-50 border border-blue-200">
+          <span className="text-blue-500 shrink-0 mt-0.5"><InfoIcon size={16} /></span>
           <p className="text-xs text-blue-700">
-            💡 Funds will be locked in escrow until Prem confirms delivery with the correct proof phrase.
+            Funds will be locked in escrow until Prem confirms delivery with the correct proof phrase.
             Share the delivery proof with Prem out-of-band once goods are shipped.
           </p>
         </div>
@@ -174,27 +229,27 @@ export function ClientView({
           id="btn-create-escrow"
           onClick={handleCreateEscrow}
           disabled={isCreating || !amount || !deliveryProof}
-          className="btn-primary w-full mt-4"
+          className="btn-primary w-full mt-4 flex items-center justify-center gap-2"
         >
-          {isCreating ? "Creating Escrow..." : `🔒 Lock ${amount || "—"} PBR in Escrow`}
+          {isCreating ? (
+            <>
+              <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Creating Escrow...
+            </>
+          ) : (
+            <>
+              <ShieldCheckIcon size={16} />
+              Lock {amount || "—"} PBR in Escrow
+            </>
+          )}
         </button>
-
-        {result && (
-          <p
-            className={`text-xs mt-2 ${
-              result.success ? "text-[var(--color-accent-emerald)]" : "text-[var(--color-accent-rose)]"
-            }`}
-          >
-            {result.success ? "✓" : "✗"} {result.message}
-          </p>
-        )}
       </div>
 
       {/* Active Escrows */}
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="text-base">📋</span>
+            <span className="text-[var(--color-text-secondary)]"><ListIcon size={20} /></span>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
               Your Active Escrows
             </h3>
@@ -206,52 +261,76 @@ export function ClientView({
 
         {myEscrows.length === 0 ? (
           <div className="text-center py-8 border border-dashed border-[var(--color-border)] rounded-lg">
-            <div className="text-2xl mb-2 opacity-40">📭</div>
+            <div className="flex justify-center mb-2 opacity-40 text-[var(--color-text-muted)]"><ListIcon size={32} /></div>
             <p className="text-sm text-[var(--color-text-muted)]">
               No escrows yet. Send a payment above to create one.
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Seller</th>
-                  <th>Amount</th>
-                  <th>Deadline</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {myEscrows.map((escrow) => (
-                  <tr key={escrow.id as number}>
-                    <td className="font-mono text-[var(--color-text-accent)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {myEscrows.map((escrow) => (
+              <div key={escrow.id as number} className="border border-[var(--color-border)] rounded-xl bg-white overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow">
+                {/* Card Header */}
+                <div className="px-4 py-3 bg-[var(--color-surface-subtle)] border-b border-[var(--color-border)] flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-[var(--color-primary-light)] text-[var(--color-primary)]">
                       #{(escrow.id as number).toString()}
-                    </td>
-                    <td>{(escrow.sellerName as string) || "Unknown"}</td>
-                    <td className="font-semibold">
-                      {escrow.amount as string} PBR
-                    </td>
-                    <td className="text-xs text-[var(--color-text-muted)]">
-                      {escrow.deadlineFormatted as string}
-                    </td>
-                    <td>
-                      <StatusBadge
-                        label={escrow.status as string}
-                        variant={
-                          escrow.status === "COMPLETED"
-                            ? "success"
-                            : escrow.status === "REFUNDED"
-                            ? "error"
-                            : "warning"
-                        }
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                    <StatusBadge
+                      label={escrow.status as string}
+                      variant={
+                        escrow.status === "COMPLETED"
+                          ? "success"
+                          : escrow.status === "REFUNDED"
+                          ? "error"
+                          : "warning"
+                      }
+                    />
+                  </div>
+                  <span className="font-semibold text-sm">{escrow.amount as string} PBR</span>
+                </div>
+                
+                {/* Card Body */}
+                <div className="p-4 flex-1">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                      <UserIcon size={14} className="text-[var(--color-text-muted)]" />
+                      <span className="font-medium text-[var(--color-text-primary)]">{(escrow.sellerName as string) || "Unknown"}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                      <ClockIcon size={14} className="text-[var(--color-text-muted)]" />
+                      <span>{escrow.deadlineFormatted as string}</span>
+                    </div>
+                  </div>
+
+                  <EscrowTimeline 
+                    escrowStatus={escrow.status as string} 
+                    deadlineFormatted={escrow.deadlineFormatted as string} 
+                  />
+                </div>
+
+                {/* Card Footer (Action) */}
+                {escrow.status === "ACTIVE" && (
+                  <div className="px-4 py-3 border-t border-[var(--color-border)] bg-gray-50/50">
+                    <button
+                      onClick={() => handleRefund(escrow.id as number)}
+                      disabled={refundingId === escrow.id}
+                      className="w-full btn-outline text-xs py-1.5 flex justify-center items-center gap-2 text-[var(--color-accent-amber)] hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200"
+                    >
+                      {refundingId === escrow.id ? (
+                        <>
+                          <RefreshCwIcon size={14} className="animate-spin" /> Processing Refund...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCwIcon size={14} /> Refund Expired Escrow
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
