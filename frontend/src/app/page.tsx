@@ -40,9 +40,9 @@ export default function RootPage() {
   // Render a minimal loading state while checking the session and redirecting
   if (isChecking) {
     return (
-      <div className="min-h-screen bg-[var(--color-background)] bg-mesh flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center">
         <div className="text-center animate-fade-in">
-          <div className="inline-block w-8 h-8 border-3 border-blue-400/30 border-t-blue-400 rounded-full animate-spin mb-4" />
+          <div className="inline-block w-8 h-8 border-3 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin mb-4" />
           <p className="text-sm text-[var(--color-text-muted)]">Routing...</p>
         </div>
       </div>
