@@ -1,8 +1,8 @@
 /**
  * @module api/auth
- * @description Login endpoint. Validates credentials and returns user session data.
+ * @description Login endpoint with updated role credentials.
  * POST /api/auth — Login
- * DELETE /api/auth — Logout (clears cookie)
+ * DELETE /api/auth — Logout
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -30,8 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a simple session token (Base64 encoded user data)
-    // In production, use JWT with proper signing
+    // Create session token
     const sessionData = {
       username: user.username,
       name: user.name,
@@ -53,12 +52,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Set session cookie (httpOnly for demo, accessible from both server and client)
     response.cookies.set(SESSION_COOKIE, token, {
-      httpOnly: false, // Allow client-side reading for demo
-      secure: false,   // HTTP for local dev
+      httpOnly: false,
+      secure: false,
       sameSite: "lax",
-      maxAge: 60 * 60 * 24, // 24 hours
+      maxAge: 60 * 60 * 24,
       path: "/",
     });
 
