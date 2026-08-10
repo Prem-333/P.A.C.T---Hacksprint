@@ -18,7 +18,7 @@ import type { Address } from "@/types";
  * UPDATE THIS after running `npx hardhat run scripts/deploy.ts --network localhost`.
  */
 export const PBR_CONTRACT_ADDRESS: Address =
-  "0x610178dA211FEF7D417bC0e6FeD39F05609AD788" as Address;
+  "0x5FbDB2315678afecb367f032d93F642f64180aa3" as Address;
 
 // ──────────────────────────────────────────────
 //  Role Constants (pre-computed keccak256 hashes)
