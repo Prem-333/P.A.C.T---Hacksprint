@@ -1,6 +1,6 @@
 /**
  * @module api/escrow/confirm
- * @description Confirms delivery and releases escrow funds. Only callable by Prem (Merchant).
+ * @description Confirms delivery and releases escrow funds.
  * POST /api/escrow/confirm
  */
 
@@ -36,12 +36,12 @@ export async function POST(request: NextRequest) {
     // Generate ISO 20022 metadata
     const metadata: TransactionMetadata = {
       type: "ESCROW_CONFIRM",
-      from: USERS.bharath.address,
-      to: USERS.prem.address,
+      from: USERS.customer.address,
+      to: USERS.seller.address,
       amount: escrowBefore.amount,
       escrowId: parseInt(escrowId),
       deliveryRef: deliveryProof,
-      remittanceInfo: `Delivery confirmed — Escrow #${escrowId} — ${escrowBefore.amount} PBR released to Prem`,
+      remittanceInfo: `Delivery confirmed — Escrow #${escrowId} — ₹${escrowBefore.amount} released to Seller`,
     };
     const receipt: TransactionReceipt = {
       blockNumber: BigInt(result.blockNumber),
@@ -55,10 +55,10 @@ export async function POST(request: NextRequest) {
     addTransaction({
       txHash: result.txHash,
       type: "ESCROW_CONFIRM",
-      from: USERS.prem.name,
-      fromAddress: USERS.prem.address,
-      to: USERS.prem.name,
-      toAddress: USERS.prem.address,
+      from: USERS.seller.name,
+      fromAddress: USERS.seller.address,
+      to: USERS.seller.name,
+      toAddress: USERS.seller.address,
       amount: escrowBefore.amount,
       blockNumber: result.blockNumber,
       timestamp: Date.now(),
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       blockNumber: result.blockNumber,
       amount: escrowBefore.amount,
       feeBreakdown,
-      message: `Delivery confirmed! ${feeBreakdown.merchantAmount} PBR released to Prem after fees.`,
+      message: `Delivery confirmed! ₹${feeBreakdown.merchantAmount} released to Seller after fees.`,
     });
   } catch (error) {
     console.error("Delivery confirmation error:", error);
