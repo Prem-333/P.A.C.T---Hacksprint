@@ -3,7 +3,7 @@
 /**
  * @module Header
  * @description Top header showing the logged-in user's profile,
- * wallet address, and logout button. No MetaMask connection needed.
+ * wallet address, and logout button.
  */
 
 import { BellIcon, LogOutIcon } from "@/components/ui/Icons";
@@ -12,15 +12,23 @@ interface HeaderProps {
   viewTitle: string;
   viewDescription: string;
   userName: string;
-  userRole: "client" | "merchant" | "vendor";
+  userRole: "customer" | "seller" | "bank" | "supplier";
   userAddress: string;
   onLogout: () => void;
 }
 
 const roleLabels = {
-  client: "Client",
-  merchant: "Merchant",
-  vendor: "Vendor",
+  customer: "Customer",
+  seller: "Seller",
+  bank: "Bank",
+  supplier: "Supplier",
+};
+
+const roleEmojis = {
+  customer: "👤",
+  seller: "🏪",
+  bank: "🏦",
+  supplier: "📦",
 };
 
 export function Header({
@@ -33,7 +41,7 @@ export function Header({
 }: HeaderProps) {
   return (
     <header className="h-16 border-b border-[var(--color-border)] bg-white flex items-center justify-between px-6">
-      {/* Left: Navigation tabs */}
+      {/* Left: Title */}
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-medium text-[var(--color-text-primary)]">
@@ -62,7 +70,7 @@ export function Header({
 
         {/* Role badge */}
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border)]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent-emerald)]" />
+          <span className="text-xs">{roleEmojis[userRole]}</span>
           {roleLabels[userRole]}
         </span>
 
@@ -77,7 +85,7 @@ export function Header({
             </p>
           </div>
           <div className="w-8 h-8 rounded-full bg-[var(--color-surface-subtle)] border border-[var(--color-border)] flex items-center justify-center text-xs font-medium text-[var(--color-text-secondary)]">
-            {userName.charAt(0)}
+            {roleEmojis[userRole]}
           </div>
         </div>
 
