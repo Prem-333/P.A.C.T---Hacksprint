@@ -1,6 +1,6 @@
 /**
  * @module api/escrow/create
- * @description Creates a new DvP escrow. Only callable by Bharath (Client).
+ * @description Creates a new DvP escrow for product purchase.
  * POST /api/escrow/create
  */
 
@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prem (Merchant) is the seller
-    const seller = USERS.prem;
+    // Seller is the perfume merchant
+    const seller = USERS.seller;
 
     const result = await createEscrow({
       sellerAddress: seller.address,
@@ -35,10 +35,10 @@ export async function POST(request: NextRequest) {
     // Generate ISO 20022 metadata
     const metadata: TransactionMetadata = {
       type: "ESCROW_CREATE",
-      from: USERS.bharath.address,
+      from: USERS.customer.address,
       to: seller.address,
       amount,
-      remittanceInfo: `DvP Escrow — Bharath → Prem — Raw material procurement (Lock: ${lockDurationHours}h)`,
+      remittanceInfo: `DvP Escrow — Customer → Seller — Perfume purchase (Lock: ${lockDurationHours}h)`,
     };
     const receipt: TransactionReceipt = {
       blockNumber: BigInt(result.blockNumber),
@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
     addTransaction({
       txHash: result.txHash,
       type: "ESCROW_CREATE",
-      from: USERS.bharath.name,
-      fromAddress: USERS.bharath.address,
+      from: USERS.customer.name,
+      fromAddress: USERS.customer.address,
       to: seller.name,
       toAddress: seller.address,
       amount,
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       success: true,
       txHash: result.txHash,
       blockNumber: result.blockNumber,
-      message: `Escrow created: ${amount} PBR locked for delivery from Prem`,
+      message: `Escrow created: ₹${amount} locked for delivery from Seller`,
     });
   } catch (error) {
     console.error("Escrow creation error:", error);
