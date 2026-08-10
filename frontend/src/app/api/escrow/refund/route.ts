@@ -1,6 +1,6 @@
 /**
  * @module api/escrow/refund
- * @description Refunds an expired escrow. Only callable by Bharath (Client/Buyer).
+ * @description Refunds an expired escrow. Only callable by Customer.
  * POST /api/escrow/refund
  */
 
@@ -30,11 +30,11 @@ export async function POST(request: NextRequest) {
     // Generate ISO 20022 metadata
     const metadata: TransactionMetadata = {
       type: "ESCROW_REFUND",
-      from: USERS.prem.address, // Returning from Escrow/Seller conceptually
-      to: USERS.bharath.address,
+      from: USERS.seller.address,
+      to: USERS.customer.address,
       amount: escrowBefore.amount,
       escrowId: parseInt(escrowId),
-      remittanceInfo: `Refund issued — Escrow #${escrowId} expired — ${escrowBefore.amount} PBR returned to Bharath`,
+      remittanceInfo: `Refund issued — Escrow #${escrowId} expired — ₹${escrowBefore.amount} returned to Customer`,
     };
     
     const receipt: TransactionReceipt = {
@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
       type: "ESCROW_REFUND",
       from: "Escrow Contract",
       fromAddress: "0x0",
-      to: USERS.bharath.name,
-      toAddress: USERS.bharath.address,
+      to: USERS.customer.name,
+      toAddress: USERS.customer.address,
       amount: escrowBefore.amount,
       blockNumber: result.blockNumber,
       timestamp: Date.now(),
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       txHash: result.txHash,
       blockNumber: result.blockNumber,
       amount: escrowBefore.amount,
-      message: `Refund successful! ${escrowBefore.amount} PBR returned to you.`,
+      message: `Refund successful! ₹${escrowBefore.amount} returned to you.`,
     });
   } catch (error) {
     console.error("Refund error:", error);
