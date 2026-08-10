@@ -1,7 +1,7 @@
-# P.A.C.T. — Purpose-Bound Automated Compliance Token
+# P.A.C.T. — Perfume Automated Commerce & Tax Platform
 
-> **A programmable B2B payment infrastructure for Indian MSME supply chains.**
-> Implements purpose-bound digital rupee transfers, atomic DvP escrow settlement with automatic fee splitting, and ISO 20022 financial messaging — all on a local EVM blockchain.
+> **A digital payment and financial automation platform for perfume selling.**
+> Features GPay integration, automated GST distribution under Indian guidelines, and multi-party settlement using ISO 20022 financial messaging — all on a local EVM blockchain.
 
 ---
 
@@ -12,10 +12,10 @@
 │                    FRONTEND (Next.js 16 App Router)                │
 │                                                                    │
 │  ┌──────────────┐  ┌───────────────┐  ┌────────────────────────┐  │
-│  │  Bharath      │  │  Prem          │  │  Kanish                │  │
-│  │  (Client)     │  │  (Merchant)    │  │  (Vendor / Observer)   │  │
-│  │  Create       │  │  Confirm       │  │  Live Feed, Audit,     │  │
-│  │  Escrows      │  │  Deliveries    │  │  All Balances          │  │
+│  │  Customer    │  │  Seller       │  │  Bank / Supplier       │  │
+│  │  (Buyer)     │  │  (Merchant)   │  │  (Observer / Vendor)   │  │
+│  │  Buy Perfumes│  │  Confirm      │  │  Live Feed, Audit,     │  │
+│  │  Pay in Escrow│  │  Deliveries    │  │  All Balances          │  │
 │  └──────┬───────┘  └───────┬────────┘  └──────────┬─────────────┘  │
 │         │                  │                       │               │
 │  ┌──────┴──────────────────┴───────────────────────┴────────────┐  │
@@ -45,8 +45,8 @@
 │  │  └─────────┘ └──────────┘ └────────────┘ └──────────────┘  │ │
 │  │                                                              │ │
 │  │  Purpose-Bound Transfers · DvP Escrow · Atomic Fee Split    │ │
-│  │  Tax (2%) → Admin  ·  Vendor Fee (1%) → Kanish              │ │
-│  │  Remaining (97%) → Merchant (Prem)                           │ │
+│  │  Tax (2%) → Admin  ·  Supplier Fee (1%) → Bank/Supplier     │ │
+│  │  Remaining (97%) → Seller (Merchant)                         │ │
 │  └──────────────────────────────────────────────────────────────┘ │
 └───────────────────────────────────────────────────────────────────┘
 ```
@@ -116,11 +116,11 @@ npx hardhat run scripts/deploy.ts --network localhost
 
 The deploy script will:
 - Deploy the `PurposeBoundRupee` contract
-- Grant `AUTHORIZED_MERCHANT` role to Prem (Account #1)
-- Mint 10,000 PBR to Bharath (Account #2)
-- Enable purpose-bound restrictions on Bharath
-- Configure fee rates: 2% tax, 1% vendor fee
-- Set Kanish (Account #3) as the vendor fee recipient
+- Grant `AUTHORIZED_MERCHANT` role to Seller (Account #1)
+- Mint 10,000 PBR to Customer (Account #2)
+- Enable purpose-bound restrictions on Customer
+- Configure fee rates: 2% tax, 1% supplier fee
+- Set Bank/Supplier (Account #3) as the vendor fee recipient
 
 **Note the contract address** — if it differs from the default, update `PBR_CONTRACT_ADDRESS` in `frontend/src/lib/contracts.ts`.
 
@@ -137,16 +137,17 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 | User     | Role     | Login Credentials     | Capabilities                                 |
 |----------|----------|-----------------------|----------------------------------------------|
-| Bharath  | Client   | `bharath` / `bharath123` | Create escrows, request refunds            |
-| Prem     | Merchant | `prem` / `prem123`      | Confirm deliveries, view fee breakdown      |
-| Kanish   | Vendor   | `kanish` / `kanish123`  | Audit all escrows, view live activity feed  |
+| Customer | Customer | `customer` / `customer123` | Browse & buy perfumes, pay via GPay or Cash |
+| Seller   | Seller   | `seller` / `seller123`      | Manage orders, confirm deliveries, track revenue |
+| Bank     | Bank     | `bank` / `bank123`  | Settlement ledger, GST collection reports |
+| Supplier | Supplier | `supplier` / `supplier123`  | Track payments from sales, distribution |
 
 ### Step-by-Step
 
-1. **Login as Bharath** → Create a DvP escrow (e.g., 1000 PBR, 1 hour lock, proof: `DELIVERY-SAGO-50KG`)
-2. **Login as Prem** → Enter the escrow ID and the exact proof phrase → Confirm Delivery
-3. **Observe the fee split**: 20 PBR tax (2%), 10 PBR vendor fee (1%), 970 PBR to Prem
-4. **Login as Kanish** → See the settlement appear in the Live Activity Feed
+1. **Login as Customer** → Create a DvP escrow to purchase perfumes (e.g., proof: `DELIVERY-PERFUME-001`)
+2. **Login as Seller** → Enter the escrow ID and the exact delivery proof → Confirm Delivery
+3. **Observe the fee split**: 20 PBR tax (2%), 10 PBR supplier fee (1%), 970 PBR to Seller
+4. **Login as Bank/Supplier** → See the settlement and fee distributions in the Live Activity Feed
 
 ### ISO 20022 Compliance
 
@@ -183,9 +184,10 @@ frontend/
 │   │   ├── globals.css               # Design system (light glassmorphism)
 │   │   ├── layout.tsx                # Root layout + ToastProvider
 │   │   ├── login/page.tsx            # Role-based login screen
-│   │   ├── client/page.tsx           # Bharath's dashboard
-│   │   ├── merchant/page.tsx         # Prem's dashboard
-│   │   └── vendor/page.tsx           # Kanish's dashboard
+│   │   ├── customer/page.tsx         # Customer's dashboard
+│   │   ├── seller/page.tsx           # Seller's dashboard
+│   │   ├── bank/page.tsx             # Bank's dashboard
+│   │   └── supplier/page.tsx         # Supplier's dashboard
 │   │   └── api/
 │   │       ├── auth/route.ts         # Session management
 │   │       ├── balance/route.ts      # Token balances + fee config
@@ -203,9 +205,9 @@ frontend/
 │   │   │   ├── Sidebar.tsx           # Navigation sidebar
 │   │   │   └── Header.tsx            # Top header bar
 │   │   ├── dashboard/
-│   │   │   ├── ClientView.tsx        # Bharath — escrow creation + timeline
-│   │   │   ├── MerchantView.tsx      # Prem — delivery confirmation + fees
-│   │   │   └── VendorView.tsx        # Kanish — audit + live feed
+│   │   │   ├── ClientView.tsx        # Customer — escrow creation + timeline
+│   │   │   ├── MerchantView.tsx      # Seller — delivery confirmation + fees
+│   │   │   └── VendorView.tsx        # Bank/Supplier — audit + live feed
 │   │   └── shared/
 │   │       ├── StatusBadge.tsx        # Colored status indicators
 │   │       ├── TransactionLog.tsx     # ISO 20022 message viewer
