@@ -2,234 +2,202 @@
 
 /**
  * @module LoginPage
- * @description Login page with three user cards (Bharath, Prem, Kanish).
- * Users can click a card or type credentials manually.
+ * @description Login page with 4 role cards: Customer, Seller, Bank, Supplier.
+ * Rebranded for P.A.C.T. — Perfume Automated Commerce & Tax Platform.
  */
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BuildingIcon, PackageIcon, EyeIcon } from "@/components/ui/Icons";
-import { useToast } from "@/components/ui/Toast";
 
-interface UserCard {
+interface LoginCard {
   username: string;
   password: string;
   name: string;
   role: string;
-  roleLabel: string;
-  icon: React.ReactNode;
+  emoji: string;
   description: string;
   color: string;
+  gradient: string;
 }
 
-const userCards: UserCard[] = [
+const users: LoginCard[] = [
   {
-    username: "bharath",
-    password: "bharath123",
-    name: "Bharath",
-    role: "Client",
-    roleLabel: "CLIENT (BUYER)",
-    icon: <BuildingIcon size={20} className="text-blue-500" />,
-    color: "text-blue-600",
-    description: "MSME Raw Material Buyer — Sends payments through escrow.",
+    username: "customer",
+    password: "customer123",
+    name: "Customer",
+    role: "customer",
+    emoji: "👤",
+    description: "Browse & buy perfumes. Pay via GPay or Cash with automatic GST calculation.",
+    color: "var(--color-primary)",
+    gradient: "from-violet-500/10 to-purple-500/10",
   },
   {
-    username: "prem",
-    password: "prem123",
-    name: "Prem",
-    role: "Merchant",
-    roleLabel: "MERCHANT (SUPPLIER)",
-    icon: <PackageIcon size={20} className="text-emerald-500" />,
-    color: "text-emerald-600",
-    description: "Authorized Merchant — Confirms delivery & receives funds.",
+    username: "seller",
+    password: "seller123",
+    name: "Seller",
+    role: "seller",
+    emoji: "🏪",
+    description: "Manage orders, confirm deliveries, track revenue & cash deposits. View logistics.",
+    color: "var(--color-accent-emerald)",
+    gradient: "from-emerald-500/10 to-teal-500/10",
   },
   {
-    username: "kanish",
-    password: "kanish123",
-    name: "Kanish",
-    role: "Vendor",
-    roleLabel: "VENDOR (OBSERVER)",
-    icon: <EyeIcon size={20} className="text-purple-500" />,
-    color: "text-purple-600",
-    description: "Supply Chain Vendor — Monitors all transactions securely.",
+    username: "bank",
+    password: "bank123",
+    name: "Bank",
+    role: "bank",
+    emoji: "🏦",
+    description: "Settlement ledger, GST collection reports, all account balances & cash tracking.",
+    color: "var(--color-accent-amber)",
+    gradient: "from-amber-500/10 to-orange-500/10",
+  },
+  {
+    username: "supplier",
+    password: "supplier123",
+    name: "Raw Material Supplier",
+    role: "supplier",
+    emoji: "📦",
+    description: "Track payments from sales — fragrance oils, bottles, and packaging distribution.",
+    color: "var(--color-accent-violet)",
+    gradient: "from-pink-500/10 to-rose-500/10",
   },
 ];
 
 export default function LoginPage() {
   const router = useRouter();
-  const { toast } = useToast();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [loadingUser, setLoadingUser] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (user?: string, pass?: string) => {
-    const loginUser = user || username;
-    const loginPass = pass || password;
-
-    if (!loginUser || !loginPass) {
-      toast({
-        type: "error",
-        message: "Missing credentials",
-        description: "Please enter both username and password.",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    setSelectedUser(loginUser);
+  const handleLogin = async (user: LoginCard) => {
+    setLoadingUser(user.username);
+    setError(null);
 
     try {
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: loginUser, password: loginPass }),
+        body: JSON.stringify({
+          username: user.username,
+          password: user.password,
+        }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        toast({
-          type: "error",
-          message: "Login failed",
-          description: data.error || "Invalid username or password.",
-        });
-        setIsLoading(false);
-        setSelectedUser(null);
-        return;
+      if (res.ok) {
+        router.push(`/${user.role}`);
+      } else {
+        setError(data.error || "Login failed");
+        setLoadingUser(null);
       }
-
-      toast({
-        type: "success",
-        message: "Welcome back!",
-        description: `Successfully signed in as ${data.user.name}.`,
-        duration: 3000,
-      });
-
-      // Redirect to dashboard
-      router.push("/");
-      router.refresh();
     } catch {
-      toast({
-        type: "error",
-        message: "Connection failed",
-        description: "Could not connect to the server. Is it running?",
-      });
-      setIsLoading(false);
-      setSelectedUser(null);
+      setError("Network error — make sure the dev server is running");
+      setLoadingUser(null);
     }
   };
 
-  const handleCardClick = (card: UserCard) => {
-    setUsername(card.username);
-    setPassword(card.password);
-    handleLogin(card.username, card.password);
-  };
-
   return (
-    <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center p-6">
-      <div className="w-full max-w-3xl animate-fade-in">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[var(--color-primary)] mb-5">
-            <span className="text-white font-semibold text-2xl">₹</span>
+    <div className="min-h-screen bg-[var(--color-background)] flex flex-col items-center justify-center p-6">
+      {/* Header */}
+      <div className="text-center mb-10 animate-fade-in">
+        <div className="inline-flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-xl bg-[var(--color-primary)] flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-violet-200">
+            P
           </div>
-          <h1 className="text-2xl font-semibold text-[var(--color-text-primary)] tracking-tight">
-            Purpose-Bound Rupee
-          </h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1.5">
-            Enterprise Digital Payment Platform — B2B Industrial Procurement
-          </p>
+          <div className="text-left">
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">
+              P.A.C.T.
+            </h1>
+            <p className="text-xs text-[var(--color-text-muted)] -mt-0.5">
+              Perfume Automated Commerce & Tax
+            </p>
+          </div>
         </div>
+        <p className="text-sm text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
+          Digital Payment & Financial Automation Platform for perfume selling with
+          GPay integration, automated GST distribution, and AI-powered tax compliance.
+        </p>
+      </div>
 
-        {/* User Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {userCards.map((card, index) => (
-            <button
-              key={card.username}
-              id={`login-${card.username}`}
-              onClick={() => handleCardClick(card)}
-              disabled={isLoading}
-              style={{ animationDelay: `${index * 100}ms` }}
-              className={`glass-card p-5 text-left animate-fade-in opacity-0 fill-mode-forwards transition-all duration-200 hover:shadow-[var(--shadow-card-hover)] ${
-                selectedUser === card.username
-                  ? "ring-2 ring-[var(--color-primary)]/40 shadow-[var(--shadow-card-hover)]"
-                  : ""
-              } ${isLoading && selectedUser !== card.username ? "opacity-50" : ""}`}
-            >
-              <div className="w-10 h-10 rounded-xl bg-[var(--color-surface-subtle)] border border-[var(--color-border)] flex items-center justify-center mb-4 text-xl">
-                {card.icon}
+      {/* User Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl w-full">
+        {users.map((user, idx) => (
+          <button
+            key={user.username}
+            id={`login-${user.username}`}
+            onClick={() => handleLogin(user)}
+            disabled={!!loadingUser}
+            className={`text-left bg-white rounded-2xl border border-[var(--color-border)] p-5 transition-all hover:shadow-lg hover:-translate-y-1 disabled:opacity-60 disabled:cursor-wait animate-fade-in group`}
+            style={{ animationDelay: `${idx * 100}ms` }}
+          >
+            {/* Emoji & Role */}
+            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${user.gradient} flex items-center justify-center text-2xl mb-4 group-hover:scale-105 transition-transform`}>
+              {user.emoji}
+            </div>
+
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1">
+              {user.name}
+            </h3>
+            <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed mb-4">
+              {user.description}
+            </p>
+
+            {/* Credentials */}
+            <div className="bg-[var(--color-surface-subtle)] rounded-lg p-2.5 mb-3">
+              <div className="flex justify-between text-[10px]">
+                <span className="text-[var(--color-text-muted)]">User</span>
+                <span className="font-mono font-medium text-[var(--color-text-primary)]">{user.username}</span>
               </div>
-              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
-                {card.name}
-              </h3>
-              <p className={`text-[10px] font-semibold ${card.color} tracking-wider mb-2`}>
-                {card.roleLabel}
-              </p>
-              <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
-                {card.description}
-              </p>
+              <div className="flex justify-between text-[10px] mt-1">
+                <span className="text-[var(--color-text-muted)]">Pass</span>
+                <span className="font-mono font-medium text-[var(--color-text-primary)]">{user.password}</span>
+              </div>
+            </div>
 
-              {selectedUser === card.username && isLoading && (
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="inline-block w-3 h-3 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
-                  <span className="text-xs text-[var(--color-primary)]">
-                    Signing in...
-                  </span>
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Divider */}
-        <div className="flex items-center gap-4 mb-6 max-w-sm mx-auto">
-          <div className="flex-1 h-px bg-[var(--color-border)]" />
-          <span className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-widest">
-            Or enter credentials manually
-          </span>
-          <div className="flex-1 h-px bg-[var(--color-border)]" />
-        </div>
-
-        {/* Manual Login Form */}
-        <div className="glass-card p-6 max-w-sm mx-auto">
-          <div className="space-y-3">
-            <input
-              id="input-login-username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username"
-              className="input-field"
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-            />
-            <input
-              id="input-login-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="input-field"
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-            />
-            <button
-              id="btn-login"
-              onClick={() => handleLogin()}
-              disabled={isLoading}
-              className="btn-primary w-full"
+            {/* Login Button */}
+            <div
+              className="w-full text-center py-2 rounded-lg text-xs font-medium text-white transition-all"
+              style={{ backgroundColor: user.color }}
             >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </button>
-          </div>
-        </div>
+              {loadingUser === user.username ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing in...
+                </span>
+              ) : (
+                `Login as ${user.name}`
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
 
-        {/* Credentials Info */}
-        <div className="mt-6 text-center">
-          <p className="text-[10px] text-[var(--color-text-muted)] tracking-wide uppercase">
-            Demo Credentials — bharath/bharath123 · prem/prem123 ·
-            kanish/kanish123
-          </p>
+      {/* Error */}
+      {error && (
+        <div className="mt-4 px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-600 font-medium animate-fade-in">
+          {error}
         </div>
+      )}
+
+      {/* Footer */}
+      <div className="mt-10 text-center space-y-2">
+        <div className="flex items-center justify-center gap-4 text-[10px] text-[var(--color-text-muted)]">
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            GPay (UPI) Integration
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            Indian GST Compliance
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+            AI Tax Engine
+          </span>
+        </div>
+        <p className="text-[10px] text-[var(--color-text-muted)]">
+          ISO 20022 Compliant · Multi-party automated settlement
+        </p>
       </div>
     </div>
   );
