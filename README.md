@@ -1,4 +1,4 @@
-# P.A.C.T. — Perfume Automated Commerce & Tax Platform
+# P.A.C.T. — Payments Automated Commerce & Tax Platform
 
 > **A digital payment and financial automation platform for perfume selling.**
 > Features GPay integration, automated GST distribution under Indian guidelines, and multi-party settlement using ISO 20022 financial messaging — all on a local EVM blockchain.

@@ -3,7 +3,7 @@
 /**
  * @module LoginPage
  * @description Login page with 4 role cards: Customer, Seller, Bank, Supplier.
- * Rebranded for P.A.C.T. — Perfume Automated Commerce & Tax Platform.
+ * Rebranded for P.A.C.T. — Payments Automated Commerce & Tax Platform.
  */
 
 import { useState } from "react";
@@ -109,12 +109,12 @@ export default function LoginPage() {
               P.A.C.T.
             </h1>
             <p className="text-xs text-[var(--color-text-muted)] -mt-0.5">
-              Perfume Automated Commerce & Tax
+              Payments Automated Commerce & Tax
             </p>
           </div>
         </div>
         <p className="text-sm text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
-          Digital Payment & Financial Automation Platform for perfume selling with
+          Digital Payment & Financial Automation Platform for B2B commerce with
           GPay integration, automated GST distribution, and AI-powered tax compliance.
         </p>
       </div>

@@ -16,9 +16,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "P.A.C.T. | Perfume Automated Commerce & Tax Platform",
+  title: "P.A.C.T. | Payments Automated Commerce & Tax Platform",
   description:
-    "Digital Payment & Financial Automation Platform for perfume selling with GPay integration, automated GST distribution under Indian guidelines, AI-powered tax compliance, and multi-party settlement.",
+    "Digital Payment & Financial Automation Platform for B2B commerce with GPay integration, automated GST distribution under Indian guidelines, AI-powered tax compliance, and multi-party settlement.",
 };
 
 export default function RootLayout({

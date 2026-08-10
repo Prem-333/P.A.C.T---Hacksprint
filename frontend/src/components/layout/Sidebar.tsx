@@ -67,7 +67,7 @@ export function Sidebar({ activeRole, userName }: SidebarProps) {
             P.A.C.T.
           </span>
           <p className="text-[9px] text-[var(--color-text-muted)] -mt-0.5">
-            Perfume Automated Commerce
+            Payments Automated Commerce
           </p>
         </div>
       </div>

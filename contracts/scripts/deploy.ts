@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
  * Deployment script for PurposeBoundRupee contract.
  * Sets up all platform roles:
  *   - Account #0 (Bank / Admin) — deployer & tax collector
- *   - Account #1 (Seller / Perfume Merchant) — authorized merchant
+ *   - Account #1 (Seller / Merchant) — authorized merchant
  *   - Account #2 (Customer / Buyer) — buyer with purpose-bound tokens
  *   - Account #3 (Fragrance Oil Supplier) — raw material supplier
  *   - Account #4 (Bottle Supplier) — raw material supplier
@@ -15,7 +15,7 @@ async function main() {
   const [bank, seller, customer, supplier1, supplier2, supplier3, oracle] = await ethers.getSigners();
 
   console.log("╔══════════════════════════════════════════════════════════╗");
-  console.log("║   P.A.C.T. — Perfume Automated Commerce & Tax (v2)   ║");
+  console.log("║   P.A.C.T. — Payments Automated Commerce & Tax (v2)  ║");
   console.log("╚══════════════════════════════════════════════════════════╝");
   console.log("");
   console.log("  Bank (Central Authority):     ", bank.address);
