@@ -337,6 +337,79 @@ function logISO20022Message(
   console.log(`  ISO 20022 pacs.008.001.08 — ${type}`);
   console.log(`  FI To FI Customer Credit Transfer`);
   console.log(divider);
-  console.log(JSON.stringify(message, null, 2));
   console.log(`${divider}\n`);
 }
+
+/**
+ * Generates an actual ISO 20022 XML payload (pacs.008.001.10) for escrow settlement.
+ * 
+ * @param escrowId - Escrow ID
+ * @param buyer - Buyer address/GSTIN placeholder
+ * @param seller - Seller address/GSTIN placeholder
+ * @param amountRaw - Total amount in wei
+ * @param taxBps - Tax basis points
+ * @param timestamp - Settlement timestamp
+ */
+export function generatePacs008XML(
+  escrowId: number,
+  buyer: string,
+  seller: string,
+  amountRaw: string,
+  taxBps: number,
+  timestamp: number
+): string {
+  const dateStr = new Date(timestamp).toISOString();
+  // We simulate formatEther for basic XML amounts
+  const amountStr = (Number(amountRaw) / 1e18).toFixed(2);
+  const taxAmount = ((Number(amountRaw) / 1e18) * taxBps) / 10000;
+  const platformFee = ((Number(amountRaw) / 1e18) * 100) / 10000;
+  const netPayout = (Number(amountRaw) / 1e18) - taxAmount - platformFee;
+
+  const msgId = `PBR-SETTLE-${escrowId}-${Date.now()}`;
+  const endToEndId = `E2E-ESC-${escrowId}`;
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.10">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>${msgId}</MsgId>
+      <CreDtTm>${dateStr}</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>CLRG</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <EndToEndId>${endToEndId}</EndToEndId>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="INR">${amountStr}</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>${dateStr.split("T")[0]}</IntrBkSttlmDt>
+      <Dbtr>
+        <Nm>Customer/Buyer GSTIN</Nm>
+        <Id>
+          <OrgId>
+            <Othr>
+              <Id>${buyer}</Id>
+            </Othr>
+          </OrgId>
+        </Id>
+      </Dbtr>
+      <Cdtr>
+        <Nm>Seller GSTIN</Nm>
+        <Id>
+          <OrgId>
+            <Othr>
+              <Id>${seller}</Id>
+            </Othr>
+          </OrgId>
+        </Id>
+      </Cdtr>
+      <RmtInf>
+        <Ustrd>Escrow Settlement: ESC-${escrowId} | GST (CGST/SGST): INR ${taxAmount.toFixed(2)} | Net Payout: INR ${netPayout.toFixed(2)}</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>`;
+}
+

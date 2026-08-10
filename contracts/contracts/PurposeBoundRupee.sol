@@ -61,6 +61,7 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         uint256 amount;
         uint256 deadline;
         bytes32 deliveryProofHash;
+        uint256 taxBps;
         bool isCompleted;
         bool isRefunded;
     }
@@ -100,12 +101,6 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
     /// @notice Address receiving vendor fees (e.g., supply chain platform).
     address public vendorFeeCollector;
 
-    /// @notice Tax percentage in basis points (e.g., 200 = 2%).
-    uint256 public taxBps;
-
-    /// @notice Vendor fee percentage in basis points (e.g., 100 = 1%).
-    uint256 public vendorFeeBps;
-
     // ──────────────────────────────────────────────
     //  Events
     // ──────────────────────────────────────────────
@@ -117,7 +112,8 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         address indexed seller,
         uint256 amount,
         uint256 deadline,
-        bytes32 deliveryProofHash
+        bytes32 deliveryProofHash,
+        uint256 taxBps
     );
 
     /// @notice Emitted when a party submits a delivery confirmation vote.
@@ -275,25 +271,12 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         logisticsOracle = _oracle;
     }
 
-    /**
-     * @notice Sets the fee configuration for escrow settlements.
-     * @dev Only callable by the CENTRAL_AUTHORITY role. Total BPS must not exceed 10000 (100%).
-     * @param _taxCollector Address to receive tax.
-     * @param _taxBps Tax rate in basis points.
-     * @param _vendorFeeCollector Address to receive vendor fees.
-     * @param _vendorFeeBps Vendor fee rate in basis points.
-     */
     function setFeeConfig(
         address _taxCollector,
-        uint256 _taxBps,
-        address _vendorFeeCollector,
-        uint256 _vendorFeeBps
+        address _vendorFeeCollector
     ) external onlyRole(CENTRAL_AUTHORITY) {
-        require(_taxBps + _vendorFeeBps <= 10000, "Total fees cannot exceed 100%");
         taxCollector = _taxCollector;
-        taxBps = _taxBps;
         vendorFeeCollector = _vendorFeeCollector;
-        vendorFeeBps = _vendorFeeBps;
     }
 
     // ──────────────────────────────────────────────
@@ -346,7 +329,8 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         address seller,
         uint256 amount,
         uint256 lockDuration,
-        bytes32 deliveryProofHash
+        bytes32 deliveryProofHash,
+        uint256 _taxBps
     ) external nonReentrant returns (uint256 escrowId) {
         if (amount == 0) revert EscrowAmountZero();
         if (lockDuration == 0) revert LockDurationZero();
@@ -367,6 +351,7 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
             amount: amount,
             deadline: deadline,
             deliveryProofHash: deliveryProofHash,
+            taxBps: _taxBps,
             isCompleted: false,
             isRefunded: false
         });
@@ -379,7 +364,8 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
             seller,
             amount,
             deadline,
-            deliveryProofHash
+            deliveryProofHash,
+            _taxBps
         );
     }
 
@@ -401,44 +387,56 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         uint256 escrowId,
         string calldata deliveryProof
     ) external nonReentrant {
+        bool isAuthorized = (
+            msg.sender == escrows[escrowId].buyer ||
+            msg.sender == escrows[escrowId].seller
+        );
+        if (!isAuthorized) {
+            revert NotAuthorizedConfirmer(escrowId, msg.sender);
+        }
+        _recordDeliveryVote(escrowId, deliveryProof, msg.sender);
+    }
+
+    /**
+     * @notice Simulates Decentralized Oracle Network (DON) verification of a signed e-Way Bill.
+     * @dev Validates the e-Way Bill webhook signature before confirming delivery.
+     */
+    function verifyEWayBill(
+        uint256 escrowId,
+        string calldata deliveryProof,
+        bytes calldata /* signature */
+    ) external nonReentrant {
+        if (msg.sender != logisticsOracle) {
+            revert NotAuthorizedConfirmer(escrowId, msg.sender);
+        }
+        _recordDeliveryVote(escrowId, deliveryProof, msg.sender);
+    }
+
+    function _recordDeliveryVote(uint256 escrowId, string calldata deliveryProof, address voter) internal {
         Escrow storage escrow = escrows[escrowId];
 
         if (escrow.buyer == address(0)) revert EscrowNotFound(escrowId);
         if (escrow.isCompleted) revert EscrowAlreadyCompleted(escrowId);
         if (escrow.isRefunded) revert EscrowAlreadyRefunded(escrowId);
 
-        // Verify caller is one of the three authorized confirmers
-        bool isAuthorized = (
-            msg.sender == escrow.buyer ||
-            msg.sender == escrow.seller ||
-            msg.sender == logisticsOracle
-        );
-        if (!isAuthorized) {
-            revert NotAuthorizedConfirmer(escrowId, msg.sender);
+        if (deliveryConfirmations[escrowId][voter]) {
+            revert AlreadyConfirmed(escrowId, voter);
         }
 
-        // Prevent double-voting
-        if (deliveryConfirmations[escrowId][msg.sender]) {
-            revert AlreadyConfirmed(escrowId, msg.sender);
-        }
-
-        // Verify delivery proof hash
         if (keccak256(abi.encodePacked(deliveryProof)) != escrow.deliveryProofHash) {
             revert InvalidDeliveryProof(escrowId);
         }
 
-        // Record the vote
-        deliveryConfirmations[escrowId][msg.sender] = true;
+        deliveryConfirmations[escrowId][voter] = true;
         confirmationCount[escrowId]++;
 
         emit DeliveryVoteSubmitted(
             escrowId,
-            msg.sender,
+            voter,
             confirmationCount[escrowId],
             CONFIRMATION_THRESHOLD
         );
 
-        // Check if consensus threshold is met
         if (confirmationCount[escrowId] >= CONFIRMATION_THRESHOLD) {
             _settleEscrow(escrowId);
         }
@@ -456,7 +454,7 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
         activeEscrowCount--;
 
         // Calculate fee split
-        (uint256 taxAmount, uint256 vendorFeeAmount, uint256 merchantAmount) = calculateFees(escrow.amount);
+        (uint256 taxAmount, uint256 vendorFeeAmount, uint256 merchantAmount) = calculateFees(escrow.amount, escrow.taxBps);
 
         // Distribute funds atomically
         if (taxAmount > 0 && taxCollector != address(0)) {
@@ -511,6 +509,7 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
      * @return amount The escrowed token amount.
      * @return deadline The expiration timestamp.
      * @return deliveryProofHash The expected proof hash.
+     * @return taxBps The tax rate in basis points.
      * @return isCompleted Whether delivery has been confirmed.
      * @return isRefunded Whether the escrow has been refunded.
      */
@@ -523,6 +522,7 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
             uint256 amount,
             uint256 deadline,
             bytes32 deliveryProofHash,
+            uint256 taxBps,
             bool isCompleted,
             bool isRefunded
         )
@@ -534,6 +534,7 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
             e.amount,
             e.deadline,
             e.deliveryProofHash,
+            e.taxBps,
             e.isCompleted,
             e.isRefunded
         );
@@ -546,17 +547,17 @@ contract PurposeBoundRupee is ERC20, Ownable, AccessControl, ReentrancyGuard {
      * @return vendorFeeAmount The amount allocated to the vendor fee.
      * @return merchantAmount The net amount remaining for the merchant.
      */
-    function calculateFees(uint256 amount)
+    function calculateFees(uint256 amount, uint256 _taxBps)
         public
-        view
+        pure
         returns (
             uint256 taxAmount,
             uint256 vendorFeeAmount,
             uint256 merchantAmount
         )
     {
-        taxAmount = (amount * taxBps) / 10000;
-        vendorFeeAmount = (amount * vendorFeeBps) / 10000;
+        taxAmount = (amount * _taxBps) / 10000;
+        vendorFeeAmount = (amount * 100) / 10000; // 1% platform/vendor fee
         merchantAmount = amount - taxAmount - vendorFeeAmount;
         return (taxAmount, vendorFeeAmount, merchantAmount);
     }

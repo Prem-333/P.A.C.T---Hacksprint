@@ -156,27 +156,7 @@ export function SellerView({
           )}
         </div>
 
-        {/* Confirm Delivery */}
-        <div className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">✅ Confirm Delivery</h3>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-[11px] text-[var(--color-text-muted)] mb-1.5 uppercase tracking-wider font-semibold">Escrow ID</label>
-              <input id="input-confirm-escrow-id" type="number" value={escrowId} onChange={(e) => setEscrowId(e.target.value)} placeholder="0" className="input-field" min="0" />
-            </div>
-            <div>
-              <label className="block text-[11px] text-[var(--color-text-muted)] mb-1.5 uppercase tracking-wider font-semibold">Delivery Proof</label>
-              <input id="input-confirm-proof" type="text" value={deliveryProof} onChange={(e) => setDeliveryProof(e.target.value)} placeholder="e.g., DELIVERY-PERFUME-001" className="input-field input-field-mono" />
-            </div>
-            <button id="btn-confirm-delivery" onClick={handleConfirmDelivery} disabled={isConfirming || !escrowId || !deliveryProof} className="btn-success w-full mt-2 flex items-center justify-center gap-2">
-              {isConfirming ? (
-                <><span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Confirming...</>
-              ) : (
-                "Confirm Delivery & Release Funds"
-              )}
-            </button>
-          </div>
-        </div>
+
       </div>
 
       {/* Cash Deposit Tracker */}

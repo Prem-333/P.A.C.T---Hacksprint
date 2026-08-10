@@ -69,10 +69,7 @@ async function main() {
   await pb1.wait();
   console.log("  ✅ Purpose-bound ON → Customer:   ", customer.address);
 
-  // Set fee configuration (2% tax to Bank, 1% fee to Supplier 1 placeholder)
-  const setFee = await token.setFeeConfig(bank.address, 200, supplier1.address, 100);
-  await setFee.wait();
-  console.log("  ✅ Fee Configured → 2% GST (Bank), 1% Platform Fee");
+  // (Fee Configuration is now dynamic per-escrow)
 
   console.log("");
   console.log("┌──────────────────────────────────────────────────────────┐");

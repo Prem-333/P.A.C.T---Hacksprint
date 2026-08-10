@@ -26,7 +26,7 @@ export default function CustomerPage() {
     );
   }
 
-  const myBalance = balances?.users.find((u) => u.username === user.username);
+  const myBalance = balances?.users?.find((u) => u.username === user.username);
 
   const logEntries = transactions.map((tx) => ({
     txHash: tx.txHash,

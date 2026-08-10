@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     const escrowBefore = await getEscrow(parseInt(escrowId));
     
     // Calculate fees to include in the response
-    const feeBreakdown = await calculateFees(escrowBefore.amountRaw);
+    const feeBreakdown = await calculateFees(escrowBefore.amountRaw, escrowBefore.taxBps);
 
     const result = await confirmDelivery({
       escrowId: parseInt(escrowId),

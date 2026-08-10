@@ -3,14 +3,12 @@
  * @description Returns INR balances and purpose-bound status for all users.
  * GET /api/balance
  */
-
 import { NextResponse } from "next/server";
 import {
   getBalance,
   getPurposeBoundStatus,
   getTotalSupply,
   getActiveEscrowCount,
-  getFeeConfig,
   USERS,
   SUPPLIERS,
 } from "@/lib/server/wallet";
@@ -19,10 +17,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const [totalSupply, activeEscrows, feeConfig] = await Promise.all([
+    const [totalSupply, activeEscrows] = await Promise.all([
       getTotalSupply(),
       getActiveEscrowCount(),
-      getFeeConfig(),
     ]);
 
     // Get balances for all users
@@ -61,8 +58,8 @@ export async function GET() {
     return NextResponse.json({
       totalSupply,
       activeEscrows,
-      taxBps: feeConfig.taxBps,
-      vendorFeeBps: feeConfig.vendorFeeBps,
+      taxBps: 1800, // Default for UI backward compatibility if needed
+      vendorFeeBps: 100,
       users: userBalances,
       suppliers: supplierBalances,
     });

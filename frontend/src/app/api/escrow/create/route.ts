@@ -13,11 +13,11 @@ import { addTransaction } from "@/lib/server/transactions";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { amount, lockDurationHours, deliveryProof } = body;
+    const { amount, lockDurationHours, deliveryProof, taxBps } = body;
 
-    if (!amount || !lockDurationHours || !deliveryProof) {
+    if (!amount || !lockDurationHours || !deliveryProof || !taxBps) {
       return NextResponse.json(
-        { error: "amount, lockDurationHours, and deliveryProof are required" },
+        { error: "amount, lockDurationHours, deliveryProof, and taxBps are required" },
         { status: 400 }
       );
     }
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
       amount,
       lockDurationHours: parseFloat(lockDurationHours),
       deliveryProof,
+      taxBps: parseInt(taxBps, 10),
     });
 
     // Generate ISO 20022 metadata

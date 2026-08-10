@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { simulateGPayPayment, USERS } from "@/lib/server/wallet";
+import { simulateGPayPayment, USERS, createEscrow, confirmDelivery } from "@/lib/server/wallet";
 import { getProductById, calculateGST, calculateDistribution } from "@/lib/server/products";
 import { getTaxWarnings } from "@/lib/server/taxEngine";
 import { addTransaction } from "@/lib/server/transactions";
@@ -49,6 +49,30 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // ─────────────────────────────────────────────────────────────────
+    // HACKATHON AUTOMATION: Auto-settle via Smart Contract
+    // Since this is the "Payments Automated Commerce & Tax Platform",
+    // we auto-create and auto-confirm the escrow to show instant DvP settlement.
+    // ─────────────────────────────────────────────────────────────────
+    const taxBps = Math.round((gst.totalGST / totalAmount) * 10000);
+    const deliveryProof = `AUTO-GPAY-${gpayResult.upiRefNumber}`;
+    
+    // 1. Lock funds in Escrow
+    const createRes = await createEscrow({
+      sellerAddress: USERS.seller.address,
+      amount: totalAmount.toString(),
+      lockDurationHours: 1,
+      deliveryProof,
+      taxBps,
+    });
+
+    // 2. Oracle & Seller automatically confirm delivery to release funds to Seller
+    const confirmRes = await confirmDelivery({
+      escrowId: createRes.escrowId,
+      deliveryProof,
+    });
+    // ─────────────────────────────────────────────────────────────────
 
     // Record in analytics
     recordSale({
