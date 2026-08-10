@@ -16,9 +16,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Purpose-Bound Rupee | Enterprise Digital Payment Platform",
+  title: "P.A.C.T. | Perfume Automated Commerce & Tax Platform",
   description:
-    "Enterprise-grade Purpose-Bound Token platform for automated B2B industrial procurement with DvP escrow settlement and ISO 20022 compliance.",
+    "Digital Payment & Financial Automation Platform for perfume selling with GPay integration, automated GST distribution under Indian guidelines, AI-powered tax compliance, and multi-party settlement.",
 };
 
 export default function RootLayout({
