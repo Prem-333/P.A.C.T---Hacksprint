@@ -2,133 +2,113 @@
 
 /**
  * @module Sidebar
- * @description Navigation sidebar with active page tracking and route links.
+ * @description Sidebar navigation with role-based menu items.
+ * Updated for Customer, Seller, Bank, and Supplier roles.
  */
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  DashboardIcon,
-  EscrowIcon,
-  TransactionsIcon,
-  AuditLogIcon,
-  SettingsIcon,
-  SupportIcon,
-} from "@/components/ui/Icons";
+import { useRouter, usePathname } from "next/navigation";
+import { RupeeIcon, ShieldIcon, TruckIcon, BellIcon, BarChartIcon, UsersIcon, PackageIcon, SettingsIcon } from "@/components/ui/Icons";
 
 interface SidebarProps {
-  activeRole: "client" | "merchant" | "vendor";
+  activeRole: "customer" | "seller" | "bank" | "supplier";
   userName: string;
 }
 
-const roleConfig = {
-  client: {
-    label: "Client Panel",
-    description: "MSME Buyer",
+const roleConfigs = {
+  customer: {
+    emoji: "👤",
+    label: "Customer",
+    color: "var(--color-primary)",
+    items: [
+      { label: "Shop & Pay", path: "/customer", icon: RupeeIcon },
+    ],
   },
-  merchant: {
-    label: "Merchant Panel",
-    description: "Supplier",
+  seller: {
+    emoji: "🏪",
+    label: "Seller",
+    color: "var(--color-accent-emerald)",
+    items: [
+      { label: "Dashboard", path: "/seller", icon: RupeeIcon },
+      { label: "Logistics", path: "/seller/logistics", icon: BarChartIcon },
+    ],
   },
-  vendor: {
-    label: "Vendor Panel",
-    description: "Observer",
+  bank: {
+    emoji: "🏦",
+    label: "Bank",
+    color: "var(--color-accent-amber)",
+    items: [
+      { label: "Ledger & GST", path: "/bank", icon: ShieldIcon },
+    ],
+  },
+  supplier: {
+    emoji: "📦",
+    label: "Supplier",
+    color: "var(--color-accent-violet)",
+    items: [
+      { label: "Payments", path: "/supplier", icon: PackageIcon },
+    ],
   },
 };
 
-function getNavItems(role: string) {
-  return [
-    { icon: <DashboardIcon size={18} />, label: "Dashboard", href: `/${role}` },
-    { icon: <EscrowIcon size={18} />, label: "Escrows", href: `/${role}/escrows` },
-    { icon: <TransactionsIcon size={18} />, label: "Transactions", href: `/${role}/transactions` },
-    { icon: <AuditLogIcon size={18} />, label: "Audit Log", href: `/${role}/audit` },
-  ];
-}
-
 export function Sidebar({ activeRole, userName }: SidebarProps) {
-  const config = roleConfig[activeRole];
-  const navItems = getNavItems(activeRole);
+  const router = useRouter();
   const pathname = usePathname();
+  const config = roleConfigs[activeRole];
 
   return (
-    <aside className="w-[240px] h-screen flex flex-col bg-white border-r border-[var(--color-border)] sticky top-0">
-      {/* Brand Header */}
-      <div className="px-5 py-5 border-b border-[var(--color-border)]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[var(--color-primary)] flex items-center justify-center">
-            <span className="text-white font-semibold text-base">₹</span>
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold text-[var(--color-text-primary)] leading-tight">
-              Purpose-Bound
-            </h1>
-            <p className="text-[10px] font-medium text-[var(--color-text-muted)] tracking-wide uppercase">
-              Rupee Platform
-            </p>
-          </div>
+    <aside className="w-60 bg-white border-r border-[var(--color-border)] flex flex-col h-screen shrink-0">
+      {/* Logo */}
+      <div className="h-16 border-b border-[var(--color-border)] flex items-center px-5 gap-2.5">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs bg-[var(--color-primary)]">
+          P
         </div>
-      </div>
-
-      {/* User Profile Card */}
-      <div className="px-4 py-3">
-        <div className="px-3 py-2.5 rounded-lg bg-[var(--color-primary)] text-white">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-medium">
-              {userName.charAt(0)}
-            </div>
-            <div>
-              <p className="text-sm font-medium leading-tight">{userName}</p>
-              <p className="text-[10px] opacity-75">{config.description}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation Items */}
-      <nav className="flex-1 px-3 py-1 space-y-0.5">
-        <div className="flex items-center gap-2 px-3 mb-2">
-          <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-widest">
-            {config.label}
+        <div>
+          <span className="text-sm font-semibold text-[var(--color-text-primary)] tracking-tight">
+            P.A.C.T.
+          </span>
+          <p className="text-[9px] text-[var(--color-text-muted)] -mt-0.5">
+            Perfume Automated Commerce
           </p>
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
         </div>
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
+      </div>
+
+      {/* Role Info */}
+      <div className="px-4 py-3 border-b border-[var(--color-border)]">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{config.emoji}</span>
+          <div>
+            <p className="text-xs font-medium text-[var(--color-text-primary)]">{userName}</p>
+            <p className="text-[10px] text-[var(--color-text-muted)]">{config.label}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Nav Items */}
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-2 mb-2">
+          Navigation
+        </p>
+        {config.items.map((item) => {
+          const isActive = pathname === item.path;
+          const Icon = item.icon;
           return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[0.8125rem] transition-colors relative group ${
-                isActive
-                  ? "bg-[var(--color-primary-light)] text-[var(--color-primary)] font-medium"
-                  : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]"
-              }`}
+            <button
+              key={item.path}
+              onClick={() => router.push(item.path)}
+              className={`nav-tab ${isActive ? "nav-tab-active" : ""}`}
             >
-              {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[var(--color-primary)] rounded-r-full" />
-              )}
-              <span className={`w-5 flex justify-center ${isActive ? "" : "opacity-75 group-hover:opacity-100 transition-opacity"}`}>
-                {item.icon}
-              </span>
-              <span>{item.label}</span>
-            </Link>
+              <Icon size={16} />
+              {item.label}
+            </button>
           );
         })}
       </nav>
 
-      {/* Bottom actions */}
-      <div className="px-3 pb-3 space-y-0.5">
-        <div className="flex items-center gap-2.5 px-3 py-2 text-[0.8125rem] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)] rounded-lg transition-colors cursor-pointer group">
-          <span className="w-5 flex justify-center opacity-75 group-hover:opacity-100 transition-opacity">
-            <SettingsIcon size={18} />
-          </span>
-          <span>Settings</span>
-        </div>
-        <div className="flex items-center gap-2.5 px-3 py-2 text-[0.8125rem] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)] rounded-lg transition-colors cursor-pointer group">
-          <span className="w-5 flex justify-center opacity-75 group-hover:opacity-100 transition-opacity">
-            <SupportIcon size={18} />
-          </span>
-          <span>Support</span>
+      {/* Footer */}
+      <div className="border-t border-[var(--color-border)] p-4">
+        <div className="flex items-center gap-2 text-[10px] text-[var(--color-text-muted)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          Digital Payment Platform v2.0
         </div>
       </div>
     </aside>
