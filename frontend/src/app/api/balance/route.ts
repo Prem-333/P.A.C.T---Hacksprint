@@ -1,6 +1,6 @@
 /**
  * @module api/balance
- * @description Returns PBR token balance and purpose-bound status for all users.
+ * @description Returns INR balances and purpose-bound status for all users.
  * GET /api/balance
  */
 
@@ -12,6 +12,7 @@ import {
   getActiveEscrowCount,
   getFeeConfig,
   USERS,
+  SUPPLIERS,
 } from "@/lib/server/wallet";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,8 @@ export async function GET() {
       getFeeConfig(),
     ]);
 
-    const balances = await Promise.all(
+    // Get balances for all users
+    const userBalances = await Promise.all(
       Object.values(USERS).map(async (user) => {
         const [balance, isPurposeBound] = await Promise.all([
           getBalance(user.address),
@@ -41,12 +43,28 @@ export async function GET() {
       })
     );
 
+    // Get supplier balances
+    const supplierBalances = await Promise.all(
+      SUPPLIERS.map(async (sup) => {
+        const balance = await getBalance(sup.address);
+        return {
+          id: sup.id,
+          name: sup.name,
+          type: sup.type,
+          address: sup.address,
+          balance,
+          sharePercent: sup.sharePercent,
+        };
+      })
+    );
+
     return NextResponse.json({
       totalSupply,
       activeEscrows,
       taxBps: feeConfig.taxBps,
       vendorFeeBps: feeConfig.vendorFeeBps,
-      users: balances,
+      users: userBalances,
+      suppliers: supplierBalances,
     });
   } catch (error) {
     console.error("Balance fetch error:", error);
