@@ -11,7 +11,7 @@ import { Header } from "@/components/layout/Header";
 import { useDashboard } from "@/hooks/useDashboard";
 
 interface DashboardLayoutProps {
-  role: "client" | "merchant" | "vendor";
+  role: "customer" | "seller" | "bank" | "supplier";
   title: string;
   description: string;
   children: (props: {
@@ -19,12 +19,14 @@ interface DashboardLayoutProps {
     balances: ReturnType<typeof useDashboard>["balances"];
     escrows: ReturnType<typeof useDashboard>["escrows"];
     transactions: ReturnType<typeof useDashboard>["transactions"];
+    products: ReturnType<typeof useDashboard>["products"];
+    taxWarnings: ReturnType<typeof useDashboard>["taxWarnings"];
     fetchData: ReturnType<typeof useDashboard>["fetchData"];
   }) => React.ReactNode;
 }
 
 export function DashboardLayout({ role, title, description, children }: DashboardLayoutProps) {
-  const { user, balances, escrows, transactions, isLoading, fetchData, handleLogout } = useDashboard(role);
+  const { user, balances, escrows, transactions, products, taxWarnings, isLoading, fetchData, handleLogout } = useDashboard(role);
 
   if (isLoading || !user) {
     return (
@@ -53,7 +55,7 @@ export function DashboardLayout({ role, title, description, children }: Dashboar
 
         <main className="flex-1 overflow-y-auto p-6">
           <div className="animate-fade-in">
-            {children({ user, balances, escrows, transactions, fetchData })}
+            {children({ user, balances, escrows, transactions, products, taxWarnings, fetchData })}
           </div>
         </main>
       </div>
