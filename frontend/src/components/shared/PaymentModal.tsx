@@ -9,6 +9,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { motion } from "framer-motion";
 import { useToast } from "@/components/ui/Toast";
 
 interface PaymentModalProps {
@@ -107,9 +108,19 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in" onClick={onClose}>
-      <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 flex flex-col max-h-[90vh] animate-fade-in"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -237,8 +248,8 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
             </div>
           )}
         </div>
-      </div>
-    </div>,
+      </motion.div>
+    </motion.div>,
     document.body
   );
 }
