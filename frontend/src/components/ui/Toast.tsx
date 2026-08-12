@@ -6,6 +6,7 @@
  */
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { CheckIcon, XIcon, AlertCircleIcon, InfoIcon } from "./Icons";
 
 type ToastType = "success" | "error" | "warning" | "info";
@@ -52,9 +53,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast, dismiss }}>
       {children}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-        {toasts.map((t) => (
-          <ToastItem key={t.id} toast={t} onDismiss={dismiss} />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {toasts.map((t) => (
+            <ToastItem key={t.id} toast={t} onDismiss={dismiss} />
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );
@@ -73,15 +76,13 @@ function ToastItem({
   useEffect(() => {
     if (!duration) return;
     const timer = setTimeout(() => {
-      setIsLeaving(true);
-      setTimeout(() => onDismiss(id), 300); // match animation duration
+      onDismiss(id);
     }, duration);
     return () => clearTimeout(timer);
   }, [duration, id, onDismiss]);
 
   const handleDismiss = () => {
-    setIsLeaving(true);
-    setTimeout(() => onDismiss(id), 300);
+    onDismiss(id);
   };
 
   const icons = {
@@ -99,12 +100,21 @@ function ToastItem({
   };
 
   return (
-    <div
-      className={`relative overflow-hidden w-80 p-4 rounded-xl border shadow-lg backdrop-blur bg-white/95 ${
-        bgs[type]
-      } ${
-        isLeaving ? "animate-toast-leave" : "animate-toast-enter"
-      }`}
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: 50, scale: 0.9 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 100, scale: 0.9 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={{ left: 0.1, right: 1 }}
+      onDragEnd={(e, { offset, velocity }) => {
+        if (offset.x > 100 || velocity.x > 500) {
+          handleDismiss();
+        }
+      }}
+      className={`relative overflow-hidden w-80 p-4 rounded-xl border shadow-lg backdrop-blur bg-white/95 ${bgs[type]} cursor-grab active:cursor-grabbing hover:shadow-xl transition-shadow`}
     >
       <div className="flex items-start gap-3">
         <div className="shrink-0 mt-0.5">{icons[type]}</div>
@@ -127,11 +137,13 @@ function ToastItem({
       </div>
       {/* Progress bar */}
       {duration && (
-        <div
-          className="absolute bottom-0 left-0 h-1 bg-black/5 animate-toast-progress"
-          style={{ animationDuration: `${duration}ms` }}
+        <motion.div
+          initial={{ width: "100%" }}
+          animate={{ width: "0%" }}
+          transition={{ duration: duration / 1000, ease: "linear" }}
+          className="absolute bottom-0 left-0 h-1 bg-black/5"
         />
       )}
-    </div>
+    </motion.div>
   );
 }
