@@ -60,7 +60,7 @@ export function ProductCard({
 }: ProductCardProps) {
   return (
     <div
-      className={`relative bg-white rounded-xl border ${categoryBorderColors[category] || "border-[var(--color-border)]"} overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 group`}
+      className={`relative bg-[rgba(255,255,255,0.7)] backdrop-blur-md rounded-xl border ${categoryBorderColors[category] || "border-[var(--color-border)]"} overflow-hidden shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 group`}
     >
       {/* Warning indicator */}
       {hasWarning && (
@@ -120,7 +120,7 @@ export function ProductCard({
         {/* Buy Button */}
         <button
           onClick={() => onBuy(id)}
-          className="btn-primary w-full text-xs py-2 flex items-center justify-center gap-1.5"
+          className="btn-primary w-full text-xs py-2 flex items-center justify-center gap-1.5 hover:shadow-[0_0_15px_rgba(91,76,212,0.4)] transition-shadow"
         >
           🛒 Buy Now
         </button>
