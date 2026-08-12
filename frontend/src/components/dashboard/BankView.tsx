@@ -6,6 +6,7 @@
  * cash deposit tracking, and all account balances.
  */
 
+import { motion, AnimatePresence } from "framer-motion";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { LiveActivityFeed } from "@/components/shared/LiveActivityFeed";
 import type { BalanceData, TransactionEntry } from "@/hooks/useDashboard";
@@ -33,30 +34,38 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
   const totalSettled = gstTransactions.reduce((sum, tx) => sum + parseFloat(tx.amount || "0"), 0);
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-5">
       {/* Summary Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="glass-card p-4">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+        }}
+        className="grid grid-cols-1 md:grid-cols-4 gap-4"
+      >
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Total Settled</p>
           <p className="text-2xl font-bold text-[var(--color-text-primary)]">₹{totalSettled.toLocaleString()}</p>
           <span className="text-[10px] text-[var(--color-text-muted)]">{gstTransactions.length} transactions</span>
-        </div>
-        <div className="glass-card p-4">
+        </motion.div>
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">CGST Collected</p>
           <p className="text-2xl font-bold text-amber-600">₹{totalCGST.toFixed(2)}</p>
           <span className="text-[10px] text-[var(--color-text-muted)]">→ Central Government</span>
-        </div>
-        <div className="glass-card p-4">
+        </motion.div>
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">SGST Collected</p>
           <p className="text-2xl font-bold text-orange-600">₹{totalSGST.toFixed(2)}</p>
           <span className="text-[10px] text-[var(--color-text-muted)]">→ State Government</span>
-        </div>
-        <div className="glass-card p-4">
+        </motion.div>
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Cash Deposits Pending</p>
           <p className="text-2xl font-bold text-rose-500">{cashPayments.filter(tx => tx.metadata?.cashDepositPending).length}</p>
           <span className="text-[10px] text-[var(--color-text-muted)]">Awaiting seller deposit</span>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* All Accounts */}
       <div className="glass-card p-5">
@@ -135,12 +144,19 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
                 <th>Time</th>
               </tr>
             </thead>
-            <tbody>
+            <motion.tbody
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: { opacity: 0 },
+                show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+              }}
+            >
               {gstTransactions.length === 0 ? (
                 <tr><td colSpan={8} className="text-center text-[var(--color-text-muted)] py-6">No GST records yet</td></tr>
               ) : (
                 gstTransactions.slice(0, 20).map((tx) => (
-                  <tr key={tx.txHash}>
+                  <motion.tr key={tx.txHash} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
                     <td className="font-mono text-[10px] text-[var(--color-text-accent)]">{tx.txHash.slice(0, 12)}...</td>
                     <td className="text-xs">{tx.metadata?.productName || "—"}</td>
                     <td>
@@ -154,10 +170,10 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
                     <td className="text-orange-600 text-xs">₹{(tx.metadata?.gstBreakdown?.sgst || 0).toFixed(2)}</td>
                     <td className="font-medium text-xs">₹{(tx.metadata?.gstBreakdown?.total || 0).toFixed(2)}</td>
                     <td className="text-xs text-[var(--color-text-muted)]">{new Date(tx.timestamp).toLocaleTimeString()}</td>
-                  </tr>
+                  </motion.tr>
                 ))
               )}
-            </tbody>
+            </motion.tbody>
           </table>
         </div>
         {gstTransactions.length > 0 && (

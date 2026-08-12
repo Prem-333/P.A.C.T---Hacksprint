@@ -6,6 +6,7 @@
  * from product sales, view supply orders, and monitor revenue share.
  */
 
+import { motion, AnimatePresence } from "framer-motion";
 import type { BalanceData, TransactionEntry } from "@/hooks/useDashboard";
 
 interface SupplierViewProps {
@@ -73,32 +74,48 @@ export function SupplierView({ balances, transactions }: SupplierViewProps) {
   const totalEarned = suppliers.reduce((sum, s) => sum + s.earned, 0);
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-5">
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="glass-card p-4">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+        }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+      >
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Total Raw Material Revenue</p>
           <p className="text-2xl font-bold text-[var(--color-text-primary)]">₹{Math.round(totalEarned).toLocaleString()}</p>
           <span className="text-[10px] text-[var(--color-text-muted)]">From {paymentTxs.length} product sales</span>
-        </div>
-        <div className="glass-card p-4">
+        </motion.div>
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Active Suppliers</p>
           <p className="text-2xl font-bold text-violet-600">3</p>
           <span className="text-[10px] text-[var(--color-text-muted)]">Fragrance · Bottles · Packaging</span>
-        </div>
-        <div className="glass-card p-4">
+        </motion.div>
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Cost Share</p>
           <p className="text-2xl font-bold text-emerald-600">40%</p>
           <span className="text-[10px] text-[var(--color-text-muted)]">Of base product price</span>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Supplier Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+        }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-5"
+      >
         {suppliers.map((supplier) => {
           const balance = balances?.suppliers?.find((s) => s.type === supplier.type);
           return (
-            <div key={supplier.type} className="glass-card overflow-hidden">
+            <motion.div key={supplier.type} variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card overflow-hidden">
               {/* Header */}
               <div className={`p-4 bg-gradient-to-r ${
                 supplier.color === "violet" ? "from-violet-50 to-purple-50" :
@@ -153,10 +170,10 @@ export function SupplierView({ balances, transactions }: SupplierViewProps) {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* Recent Supply Payments */}
       <div className="glass-card p-5">
@@ -179,13 +196,20 @@ export function SupplierView({ balances, transactions }: SupplierViewProps) {
                   <th>Time</th>
                 </tr>
               </thead>
-              <tbody>
+              <motion.tbody
+                initial="hidden"
+                animate="show"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+                }}
+              >
                 {paymentTxs.slice(0, 15).map((tx) => {
                   const amount = parseFloat(tx.amount || "0");
                   const base = amount / 1.28;
                   const raw = base * 0.4;
                   return (
-                    <tr key={tx.txHash}>
+                    <motion.tr key={tx.txHash} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
                       <td className="font-mono text-[10px] text-[var(--color-text-accent)]">{tx.txHash.slice(0, 10)}...</td>
                       <td className="text-xs">{tx.metadata?.productName || "—"}</td>
                       <td className="font-semibold">₹{amount.toLocaleString()}</td>
@@ -193,10 +217,10 @@ export function SupplierView({ balances, transactions }: SupplierViewProps) {
                       <td className="text-blue-600 text-xs">₹{(raw * 0.3).toFixed(0)}</td>
                       <td className="text-amber-600 text-xs">₹{(raw * 0.2).toFixed(0)}</td>
                       <td className="text-xs text-[var(--color-text-muted)]">{new Date(tx.timestamp).toLocaleTimeString()}</td>
-                    </tr>
+                    </motion.tr>
                   );
                 })}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
         )}

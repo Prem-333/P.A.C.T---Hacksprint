@@ -7,6 +7,7 @@
  */
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { ISO20022Message } from "@/types";
 
 interface TransactionLogEntry {
@@ -56,7 +57,7 @@ export function TransactionLog({ entries }: TransactionLogProps) {
 
       <div className="divide-y divide-[var(--color-border)]">
         {entries.map((entry, index) => (
-          <div key={entry.txHash + index} className="animate-fade-in">
+          <div key={entry.txHash + index}>
             <button
               onClick={() =>
                 setExpandedIndex(expandedIndex === index ? null : index)
@@ -85,15 +86,25 @@ export function TransactionLog({ entries }: TransactionLogProps) {
               </div>
             </button>
 
-            {expandedIndex === index && (
-              <div className="px-5 pb-4 animate-fade-in">
-                <div className="bg-[var(--color-surface-subtle)] rounded-lg p-4 overflow-x-auto border border-[var(--color-border)]">
-                  <pre className="text-xs font-mono text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap">
-                    {JSON.stringify(entry.iso20022, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            )}
+            <AnimatePresence initial={false}>
+              {expandedIndex === index && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-5 pb-4">
+                    <div className="bg-[var(--color-surface-subtle)] rounded-lg p-4 overflow-x-auto border border-[var(--color-border)]">
+                      <pre className="text-xs font-mono text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap">
+                        {JSON.stringify(entry.iso20022, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         ))}
       </div>

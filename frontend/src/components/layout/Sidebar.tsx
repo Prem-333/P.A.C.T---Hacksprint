@@ -7,6 +7,7 @@
  */
 
 import { useRouter, usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import { RupeeIcon, ShieldIcon, TruckIcon, BellIcon, BarChartIcon, UsersIcon, PackageIcon, SettingsIcon } from "@/components/ui/Icons";
 
 interface SidebarProps {
@@ -95,10 +96,17 @@ export function Sidebar({ activeRole, userName }: SidebarProps) {
             <button
               key={item.path}
               onClick={() => router.push(item.path)}
-              className={`nav-tab ${isActive ? "nav-tab-active" : ""}`}
+              className={`nav-tab relative ${isActive ? "text-[var(--color-primary)]" : ""}`}
             >
+              {isActive && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-0 bg-[var(--color-surface-subtle)] rounded-lg -z-10 border border-[var(--color-border)] shadow-sm"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
               <Icon size={16} />
-              {item.label}
+              <span className="relative z-10">{item.label}</span>
             </button>
           );
         })}

@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { FeeBreakdown } from "@/components/shared/FeeBreakdown";
 import { EscrowTimeline } from "@/components/shared/EscrowTimeline";
@@ -100,35 +101,43 @@ export function SellerView({
   const pendingEscrows = myEscrows.filter((e) => e.status === "PENDING");
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-5">
       {/* Tax Warnings */}
       {taxWarnings && taxWarnings.warnings.length > 0 && (
         <TaxWarningBanner warnings={taxWarnings.warnings} />
       )}
 
       {/* Revenue Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="glass-card p-4">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+        }}
+        className="grid grid-cols-1 md:grid-cols-4 gap-4"
+      >
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Total Balance</p>
           <p className="text-2xl font-bold text-[var(--color-text-primary)]">₹{parseFloat(balance).toLocaleString()}</p>
           <StatusBadge label="Authorized Seller" variant="success" icon="✓" />
-        </div>
-        <div className="glass-card p-4">
+        </motion.div>
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">GPay Revenue</p>
           <p className="text-2xl font-bold text-[var(--color-primary)]">₹{gpayRevenue.toLocaleString()}</p>
           <span className="text-[10px] text-[var(--color-text-muted)]">📱 Digital payments</span>
-        </div>
-        <div className="glass-card p-4">
+        </motion.div>
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Cash Revenue</p>
           <p className="text-2xl font-bold text-emerald-600">₹{cashRevenue.toLocaleString()}</p>
           <span className="text-[10px] text-[var(--color-text-muted)]">💵 Cash collected</span>
-        </div>
-        <div className="glass-card p-4">
+        </motion.div>
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Pending Deposits</p>
           <p className="text-2xl font-bold text-amber-500">{pendingCashDeposits.length}</p>
           <span className="text-[10px] text-[var(--color-text-muted)]">🏦 Cash → Bank</span>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Recent Sales */}
@@ -145,26 +154,35 @@ export function SellerView({
               </p>
             </div>
           ) : (
-            <div className="space-y-2 max-h-[320px] overflow-y-auto">
-              {recentSales.map((sale) => (
-                <div key={sale.txHash} className="flex items-center justify-between p-3 rounded-lg bg-[var(--color-surface-subtle)] border border-[var(--color-border)]">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">{sale.type === "GPAY_PAYMENT" ? "📱" : "💵"}</span>
-                    <div>
-                      <p className="text-xs font-medium text-[var(--color-text-primary)]">{sale.metadata?.productName || "Sale"}</p>
-                      <p className="text-[10px] text-[var(--color-text-muted)]">
-                        {sale.type === "GPAY_PAYMENT" ? "GPay" : "Cash"} · {new Date(sale.timestamp).toLocaleTimeString()}
-                      </p>
+            <div className="space-y-2 max-h-[320px] overflow-y-auto pr-2">
+              <AnimatePresence>
+                {recentSales.map((sale) => (
+                  <motion.div
+                    key={sale.txHash}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="flex items-center justify-between p-3 rounded-lg bg-[var(--color-surface-subtle)] border border-[var(--color-border)]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">{sale.type === "GPAY_PAYMENT" ? "📱" : "💵"}</span>
+                      <div>
+                        <p className="text-xs font-medium text-[var(--color-text-primary)]">{sale.metadata?.productName || "Sale"}</p>
+                        <p className="text-[10px] text-[var(--color-text-muted)]">
+                          {sale.type === "GPAY_PAYMENT" ? "GPay" : "Cash"} · {new Date(sale.timestamp).toLocaleTimeString()}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-emerald-600">+₹{parseFloat(sale.amount).toLocaleString()}</p>
-                    {sale.metadata?.gstBreakdown && (
-                      <p className="text-[9px] text-[var(--color-text-muted)]">GST: ₹{sale.metadata.gstBreakdown.total.toFixed(2)}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-emerald-600">+₹{parseFloat(sale.amount).toLocaleString()}</p>
+                      {sale.metadata?.gstBreakdown && (
+                        <p className="text-[9px] text-[var(--color-text-muted)]">GST: ₹{sale.metadata.gstBreakdown.total.toFixed(2)}</p>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
         </div>
