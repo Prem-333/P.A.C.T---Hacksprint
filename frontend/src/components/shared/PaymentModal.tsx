@@ -7,7 +7,8 @@
  * Cash: Records cash payment with seller bank debit notification
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useToast } from "@/components/ui/Toast";
 
 interface PaymentModalProps {
@@ -44,6 +45,11 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
   const [step, setStep] = useState<"select" | "processing" | "success">("select");
   const [paymentMethod, setPaymentMethod] = useState<"gpay" | "cash" | null>(null);
   const [result, setResult] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handlePayment = async (method: "gpay" | "cash") => {
     setPaymentMethod(method);
@@ -98,14 +104,16 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden animate-fade-in"
+        className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 flex flex-col max-h-[90vh] animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-subtle)]">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-subtle)] shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -120,7 +128,7 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
         </div>
 
         {/* Body */}
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto">
           {step === "select" && (
             <>
               {/* Amount Display */}
@@ -230,6 +238,7 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
