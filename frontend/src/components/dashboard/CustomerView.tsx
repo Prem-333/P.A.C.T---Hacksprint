@@ -7,6 +7,7 @@
  */
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ProductCard } from "@/components/shared/ProductCard";
 import { PaymentModal } from "@/components/shared/PaymentModal";
 import { TaxWarningBanner } from "@/components/shared/TaxWarningBanner";
@@ -63,7 +64,7 @@ export function CustomerView({
   };
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-5">
       {/* Tax Warnings */}
       {taxWarnings && taxWarnings.warnings.length > 0 && (
         <TaxWarningBanner
@@ -121,30 +122,34 @@ export function CustomerView({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filteredProducts.map((product, index) => (
-            <div
-              key={product.id}
-              className="animate-fade-in opacity-0"
-              style={{ animationDelay: `${index * 100}ms`, animationFillMode: "forwards" }}
-            >
-              <ProductCard
-                id={product.id}
-                name={product.name}
-                description={product.description}
-                price={product.price}
-                category={product.category}
-                hsnCode={product.hsnCode}
-                gstBreakdown={product.gstBreakdown}
-                hasWarning={product.hasWarning}
-                onBuy={(id) => {
-                  const prod = products.find((p) => p.id === id);
-                  if (prod) setSelectedProduct(prod);
-                }}
-              />
-            </div>
-          ))}
-        </div>
+        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <AnimatePresence mode="popLayout">
+            {filteredProducts.map((product, index) => (
+              <motion.div
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1, transition: { duration: 0.3, delay: index * 0.05 } }}
+                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                key={product.id}
+              >
+                <ProductCard
+                  id={product.id}
+                  name={product.name}
+                  description={product.description}
+                  price={product.price}
+                  category={product.category}
+                  hsnCode={product.hsnCode}
+                  gstBreakdown={product.gstBreakdown}
+                  hasWarning={product.hasWarning}
+                  onBuy={(id) => {
+                    const prod = products.find((p) => p.id === id);
+                    if (prod) setSelectedProduct(prod);
+                  }}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       </div>
 
       {/* Recent Orders */}
@@ -199,23 +204,25 @@ export function CustomerView({
       </div>
 
       {/* Payment Modal */}
-      {selectedProduct && (
-        <PaymentModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          onSuccess={() => {
-            setSelectedProduct(null);
-            onRefresh();
-            // Automatically scroll down to Recent Orders
-            setTimeout(() => {
-              document.getElementById("recent-orders")?.scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-              });
-            }, 300);
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {selectedProduct && (
+          <PaymentModal
+            product={selectedProduct}
+            onClose={() => setSelectedProduct(null)}
+            onSuccess={() => {
+              setSelectedProduct(null);
+              onRefresh();
+              // Automatically scroll down to Recent Orders
+              setTimeout(() => {
+                document.getElementById("recent-orders")?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }, 300);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
