@@ -10,20 +10,13 @@ import { Header } from "@/components/layout/Header";
 import { CustomerView } from "@/components/dashboard/CustomerView";
 import { TransactionLog } from "@/components/shared/TransactionLog";
 import { useDashboard } from "@/hooks/useDashboard";
-import type { ISO20022Message } from "@/types";
+import { DashboardSkeleton } from "@/components/shared/DashboardSkeleton";
 
 export default function CustomerPage() {
   const { user, balances, products, taxWarnings, transactions, isLoading, fetchData, handleLogout } = useDashboard("customer");
 
   if (isLoading || !user) {
-    return (
-      <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center">
-        <div className="text-center animate-fade-in">
-          <div className="inline-block w-8 h-8 border-3 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin mb-4" />
-          <p className="text-sm text-[var(--color-text-muted)]">Loading Customer Dashboard...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const myBalance = balances?.users?.find((u) => u.username === user.username);

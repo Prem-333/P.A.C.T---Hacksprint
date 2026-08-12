@@ -12,18 +12,13 @@ import { TransactionLog } from "@/components/shared/TransactionLog";
 import { useDashboard } from "@/hooks/useDashboard";
 import type { ISO20022Message } from "@/types";
 
+import { DashboardSkeleton } from "@/components/shared/DashboardSkeleton";
+
 export default function SellerPage() {
   const { user, balances, escrows, transactions, taxWarnings, isLoading, fetchData, handleLogout } = useDashboard("seller");
 
   if (isLoading || !user) {
-    return (
-      <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center">
-        <div className="text-center animate-fade-in">
-          <div className="inline-block w-8 h-8 border-3 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin mb-4" />
-          <p className="text-sm text-[var(--color-text-muted)]">Loading Seller Dashboard...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const myBalance = balances?.users?.find((u) => u.username === user.username);
