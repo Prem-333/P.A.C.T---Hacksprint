@@ -66,12 +66,46 @@ html {
 }
 
 body {
-  background: var(--color-background);
+  background: linear-gradient(135deg, var(--color-background) 0%, #e2e8f0 100%);
+  background-attachment: fixed;
   color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-weight: 400;
+  position: relative;
+}
+
+/* Add subtle animated glowing orbs in the background for true glassmorphism effect */
+body::before, body::after {
+  content: "";
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  z-index: -1;
+  opacity: 0.4;
+  animation: orb-float 20s ease-in-out infinite alternate;
+}
+body::before {
+  width: 40vw;
+  height: 40vw;
+  background: rgba(91, 76, 212, 0.15); /* Primary */
+  top: -10vw;
+  left: -10vw;
+}
+body::after {
+  width: 35vw;
+  height: 35vw;
+  background: rgba(16, 185, 129, 0.15); /* Emerald */
+  bottom: -5vw;
+  right: -10vw;
+  animation-delay: -10s;
+}
+
+@keyframes orb-float {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(5vw, 5vw) scale(1.1); }
+  100% { transform: translate(-5vw, 10vw) scale(0.9); }
 }
 
 /* ──────────────────────────────────────────────
@@ -99,11 +133,13 @@ body {
    Card Component (replaces glass-card)
    ────────────────────────────────────────────── */
 .glass-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+  transition: all var(--transition-base);
 }
 
 .glass-card:hover {
@@ -111,10 +147,12 @@ body {
 }
 
 .glass-card-elevated {
-  background: var(--color-surface-elevated);
-  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-elevated);
 }
 
 .card-interactive {
@@ -151,7 +189,7 @@ body {
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.97);
 }
 
 .btn-primary:disabled {
@@ -175,7 +213,11 @@ body {
 .btn-success:hover:not(:disabled) {
   background: #059669;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.btn-success:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
 }
 
 .btn-success:disabled {
@@ -200,7 +242,11 @@ body {
 .btn-danger:hover:not(:disabled) {
   background: #dc2626;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
 }
 
 .btn-danger:disabled {
