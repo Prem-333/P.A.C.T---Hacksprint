@@ -122,35 +122,44 @@ export function CustomerView({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filteredProducts.map((product) => (
-            <ProductCard
+          {filteredProducts.map((product, index) => (
+            <div
               key={product.id}
-              id={product.id}
-              name={product.name}
-              description={product.description}
-              price={product.price}
-              category={product.category}
-              hsnCode={product.hsnCode}
-              gstBreakdown={product.gstBreakdown}
-              hasWarning={product.hasWarning}
-              onBuy={(id) => {
-                const prod = products.find((p) => p.id === id);
-                if (prod) setSelectedProduct(prod);
-              }}
-            />
+              className="animate-fade-in opacity-0"
+              style={{ animationDelay: `${index * 100}ms`, animationFillMode: "forwards" }}
+            >
+              <ProductCard
+                id={product.id}
+                name={product.name}
+                description={product.description}
+                price={product.price}
+                category={product.category}
+                hsnCode={product.hsnCode}
+                gstBreakdown={product.gstBreakdown}
+                hasWarning={product.hasWarning}
+                onBuy={(id) => {
+                  const prod = products.find((p) => p.id === id);
+                  if (prod) setSelectedProduct(prod);
+                }}
+              />
+            </div>
           ))}
         </div>
       </div>
 
       {/* Recent Orders */}
-      <div className="glass-card p-5">
+      <div id="recent-orders" className="glass-card p-5">
         <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
           📋 Recent Orders
         </h3>
         {recentOrders.length === 0 ? (
-          <div className="text-center py-8 border border-dashed border-[var(--color-border)] rounded-lg">
-            <p className="text-sm text-[var(--color-text-muted)]">
-              No orders yet. Browse the catalog and make your first purchase!
+          <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-[var(--color-border)] rounded-xl bg-[var(--color-surface-subtle)]/50">
+            <span className="text-4xl mb-3 opacity-80 hover:scale-110 transition-transform cursor-default">🛍️</span>
+            <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
+              Your order history is empty
+            </p>
+            <p className="text-xs text-[var(--color-text-muted)] max-w-[250px] text-center">
+              Browse the catalog above and make your first purchase to see it here!
             </p>
           </div>
         ) : (
@@ -197,6 +206,13 @@ export function CustomerView({
           onSuccess={() => {
             setSelectedProduct(null);
             onRefresh();
+            // Automatically scroll down to Recent Orders
+            setTimeout(() => {
+              document.getElementById("recent-orders")?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+            }, 300);
           }}
         />
       )}

@@ -26,11 +26,13 @@ export function TransactionLog({ entries }: TransactionLogProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="glass-card p-5 text-center">
-        <div className="text-xl mb-2 opacity-30">📋</div>
-        <p className="text-[var(--color-text-muted)] text-sm">
-          No transactions recorded yet. Execute a contract interaction to see
-          ISO 20022 compliance data.
+      <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-[var(--color-border)] rounded-xl bg-[var(--color-surface-subtle)]/50">
+        <span className="text-4xl mb-3 opacity-80 hover:scale-110 transition-transform cursor-default">📋</span>
+        <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
+          No transactions yet
+        </p>
+        <p className="text-xs text-[var(--color-text-muted)] max-w-[280px] text-center">
+          Execute a contract interaction to see ISO 20022 compliance data appear here.
         </p>
       </div>
     );

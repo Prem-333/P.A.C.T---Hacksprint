@@ -60,6 +60,13 @@ export function SellerView({
         setEscrowId("");
         setDeliveryProof("");
         onRefresh();
+        
+        setTimeout(() => {
+          document.getElementById("recent-sales")?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }, 300);
       } else {
         toast({ type: "error", message: "Confirmation Failed", description: data.error });
       }
@@ -125,11 +132,17 @@ export function SellerView({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Recent Sales */}
-        <div className="glass-card p-5">
+        <div id="recent-sales" className="glass-card p-5">
           <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">📊 Recent Sales</h3>
           {recentSales.length === 0 ? (
-            <div className="text-center py-8 border border-dashed border-[var(--color-border)] rounded-lg">
-              <p className="text-xs text-[var(--color-text-muted)]">No sales yet. Waiting for customer purchases.</p>
+            <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-[var(--color-border)] rounded-xl bg-[var(--color-surface-subtle)]/50">
+              <span className="text-4xl mb-3 opacity-80 hover:scale-110 transition-transform cursor-default">🏷️</span>
+              <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
+                No sales yet
+              </p>
+              <p className="text-xs text-[var(--color-text-muted)] max-w-[250px] text-center">
+                Waiting for customers to make their first purchase. Your sales will appear here!
+              </p>
             </div>
           ) : (
             <div className="space-y-2 max-h-[320px] overflow-y-auto">
@@ -191,9 +204,9 @@ export function SellerView({
             { step: "4", label: "Suppliers Paid", icon: "📦", status: "Raw materials" },
             { step: "5", label: "Seller Receives", icon: "💰", status: "Net margin" },
           ].map((item, i) => (
-            <div key={item.step} className="flex flex-col items-center text-center p-3 rounded-lg bg-[var(--color-surface-subtle)] border border-[var(--color-border)] relative">
-              <span className="text-2xl mb-2">{item.icon}</span>
-              <span className="text-xs font-medium text-[var(--color-text-primary)] mb-0.5">{item.label}</span>
+            <div key={item.step} className="flex flex-col items-center text-center p-3 rounded-lg bg-[var(--color-surface-subtle)] border border-[var(--color-border)] relative hover:-translate-y-1 hover:shadow-md hover:border-[var(--color-primary)] transition-all duration-300 group cursor-default">
+              <span className="text-2xl mb-2 group-hover:scale-125 transition-transform">{item.icon}</span>
+              <span className="text-xs font-medium text-[var(--color-text-primary)] mb-0.5 group-hover:text-[var(--color-primary)] transition-colors">{item.label}</span>
               <span className="text-[10px] text-[var(--color-text-muted)]">{item.status}</span>
               {i < 4 && (
                 <span className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] text-lg">→</span>
