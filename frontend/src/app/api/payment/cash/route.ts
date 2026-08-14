@@ -69,11 +69,6 @@ export async function POST(request: NextRequest) {
       taxBps,
     });
 
-    // 2. Oracle & Seller automatically confirm delivery to release funds to Seller
-    const confirmRes = await confirmDelivery({
-      escrowId: createRes.escrowId,
-      deliveryProof,
-    });
     // ─────────────────────────────────────────────────────────────────
 
     // Record in analytics

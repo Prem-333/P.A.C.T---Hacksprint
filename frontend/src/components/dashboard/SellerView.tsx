@@ -65,6 +65,48 @@ export function SellerView({
     (tx) => tx.metadata?.paymentMethod === "cash" && tx.metadata?.cashDepositPending
   );
 
+  const myEscrows = escrows.filter(
+    (e) => (e.seller as string)?.toLowerCase() === address.toLowerCase()
+  );
+  const pendingEscrows = myEscrows.filter((e) => e.status === "PENDING");
+  
+  const totalUnsettled = pendingEscrows.reduce(
+    (sum, e) => sum + parseFloat(e.amount as string),
+    0
+  );
+
+  const pendingCashAmount = pendingCashDeposits.reduce(
+    (sum, tx) => sum + parseFloat(tx.amount),
+    0
+  );
+
+  // Demo calculations for breakdown
+  const platformFee = totalUnsettled * (vendorFeeBps / 10000); // ~1%
+  const taxAmount = totalUnsettled * 0.1525; // derived average GST for demo
+  const supplierAmount = totalUnsettled * 0.10; // supplier payments
+  const totalDistributed = platformFee + taxAmount + supplierAmount;
+  const netProfit = totalUnsettled - totalDistributed;
+
+  const [isSettling, setIsSettling] = useState(false);
+
+  const handleSettleFunds = useCallback(async () => {
+    setIsSettling(true);
+    try {
+      const res = await fetch("/api/settlement/monthly", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        toast({ type: "success", message: "Monthly Settlement Complete", description: data.message });
+        onRefresh();
+      } else {
+        toast({ type: "error", message: "Settlement Failed", description: data.error || "Unknown error" });
+      }
+    } catch {
+      toast({ type: "error", message: "Network Error", description: "Failed to connect." });
+    } finally {
+      setIsSettling(false);
+    }
+  }, [onRefresh, toast]);
+
   return (
     <div className="space-y-6">
       {/* Tax Warnings */}
@@ -72,12 +114,72 @@ export function SellerView({
         <TaxWarningBanner warnings={taxWarnings.warnings} />
       )}
 
+      {/* Monthly Settlement Banner */}
+      <div className="bg-white rounded-md border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-600">
+              <Banknote className="w-4 h-4" />
+            </span>
+            <h2 className="text-lg font-bold text-slate-900">Monthly Settlement</h2>
+          </div>
+          <p className="text-sm text-slate-500 max-w-xl">
+            Funds from your sales are held securely in escrow. At the end of the month, settle your account to distribute taxes, pay suppliers, and release your net profit to your bank.
+          </p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
+          <div className="text-center sm:text-left pr-0 sm:pr-6 sm:border-r border-slate-200">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Unsettled</p>
+            <p className="text-2xl font-bold text-slate-900">₹{totalUnsettled.toLocaleString()}</p>
+          </div>
+          <button
+            onClick={handleSettleFunds}
+            disabled={totalUnsettled === 0 || isSettling}
+            className={`px-6 py-2.5 rounded-md text-sm font-semibold transition-all ${
+              totalUnsettled === 0
+                ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                : isSettling
+                ? "bg-slate-800 text-white opacity-70 cursor-wait"
+                : "bg-slate-900 text-white hover:bg-slate-800 hover:shadow-md"
+            }`}
+          >
+            {isSettling ? "Processing..." : "Release Monthly Funds"}
+          </button>
+        </div>
+      </div>
+
+      {/* Monthly Breakdown Cards (Profit & Distribution) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-emerald-50/50 rounded-md border border-emerald-100 p-5 flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider mb-1">Your Net Profit</p>
+            <p className="text-2xl font-bold text-emerald-700">₹{netProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+            <p className="text-xs text-emerald-600/70 mt-1 font-medium">Margin after all deductions</p>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <TrendingUp className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="bg-orange-50/50 rounded-md border border-orange-100 p-5 flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-[11px] font-semibold text-orange-600 uppercase tracking-wider mb-1">To Be Distributed</p>
+            <p className="text-2xl font-bold text-orange-700">₹{totalDistributed.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+            <p className="text-xs text-orange-600/70 mt-1 font-medium">Taxes, platform fees, suppliers</p>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
+            <Network className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
       {/* Revenue Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Total Balance */}
         <div className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
           <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Balance</p>
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Settled Balance</p>
             <p className="text-3xl font-bold text-slate-900">₹{parseFloat(balance).toLocaleString()}</p>
           </div>
           <div className="mt-4 flex items-center">
@@ -91,7 +193,7 @@ export function SellerView({
         {/* GPay Revenue */}
         <div className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
           <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">GPay Revenue</p>
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">GPay Collected (Monthly)</p>
             <p className="text-3xl font-bold text-[#0a2540]">₹{gpayRevenue.toLocaleString()}</p>
           </div>
           <div className="mt-4 flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
@@ -100,27 +202,15 @@ export function SellerView({
           </div>
         </div>
 
-        {/* Cash Revenue */}
-        <div className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+        {/* Pending Cash Deposit Amount */}
+        <div className={`bg-white rounded-md border ${pendingCashAmount > 0 ? 'border-amber-200 bg-amber-50/10' : 'border-slate-200'} p-5 flex flex-col justify-between shadow-sm min-h-[120px]`}>
           <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Cash Revenue</p>
-            <p className="text-3xl font-bold text-[#0c6a54]">₹{cashRevenue.toLocaleString()}</p>
-          </div>
-          <div className="mt-4 flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
-            <Banknote className="w-3.5 h-3.5" />
-            <span>Cash collected</span>
-          </div>
-        </div>
-
-        {/* Pending Deposits */}
-        <div className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
-          <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Pending Deposits</p>
-            <p className="text-3xl font-bold text-amber-500">{pendingCashDeposits.length}</p>
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Cash To Deposit</p>
+            <p className={`text-3xl font-bold ${pendingCashAmount > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>₹{pendingCashAmount.toLocaleString()}</p>
           </div>
           <div className="mt-4 flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
             <Landmark className="w-3.5 h-3.5" />
-            <span>Cash → Bank</span>
+            <span>Physical cash → Bank</span>
           </div>
         </div>
       </div>
