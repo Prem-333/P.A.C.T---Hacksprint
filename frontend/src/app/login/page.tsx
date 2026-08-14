@@ -8,16 +8,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { User, Store, Landmark, Package } from "lucide-react";
 
 interface LoginCard {
   username: string;
   password: string;
   name: string;
   role: string;
-  emoji: string;
+  icon: React.ElementType;
   description: string;
-  color: string;
-  gradient: string;
+  btnColor: string;
+  iconBg: string;
+  iconColor: string;
 }
 
 const users: LoginCard[] = [
@@ -26,40 +28,44 @@ const users: LoginCard[] = [
     password: "customer123",
     name: "Customer",
     role: "customer",
-    emoji: "👤",
-    description: "Browse & buy perfumes. Pay via GPay or Cash with automatic GST calculation.",
-    color: "var(--color-primary)",
-    gradient: "from-violet-500/10 to-purple-500/10",
+    icon: User,
+    description: "Browse & buy products. Pay via integrated gateways with automatic tax calculation and invoice generation.",
+    btnColor: "#042045",
+    iconBg: "bg-slate-50",
+    iconColor: "text-[#042045]",
   },
   {
     username: "seller",
     password: "seller123",
     name: "Seller",
     role: "seller",
-    emoji: "🏪",
-    description: "Manage orders, confirm deliveries, track revenue & cash deposits. View logistics.",
-    color: "var(--color-accent-emerald)",
-    gradient: "from-emerald-500/10 to-teal-500/10",
+    icon: Store,
+    description: "Manage orders, confirm deliveries, track revenue & cash deposits. View logistics and automated compliance reports.",
+    btnColor: "#0c6a54",
+    iconBg: "bg-emerald-50",
+    iconColor: "text-[#0c6a54]",
   },
   {
     username: "bank",
     password: "bank123",
     name: "Bank",
     role: "bank",
-    emoji: "🏦",
-    description: "Settlement ledger, GST collection reports, all account balances & cash tracking.",
-    color: "var(--color-accent-amber)",
-    gradient: "from-amber-500/10 to-orange-500/10",
+    icon: Landmark,
+    description: "Settlement ledger, tax collection reports, view all account balances & comprehensive transaction tracking.",
+    btnColor: "#f39c12",
+    iconBg: "bg-orange-50",
+    iconColor: "text-[#d68910]",
   },
   {
     username: "supplier",
     password: "supplier123",
     name: "Raw Material Supplier",
     role: "supplier",
-    emoji: "📦",
-    description: "Track payments from sales — fragrance oils, bottles, and packaging distribution.",
-    color: "var(--color-accent-violet)",
-    gradient: "from-pink-500/10 to-rose-500/10",
+    icon: Package,
+    description: "Track payments from sales — monitor materials, automated inventory alerts, and packaging distribution metrics.",
+    btnColor: "#ab8af5",
+    iconBg: "bg-purple-50",
+    iconColor: "text-[#8e44ad]",
   },
 ];
 
@@ -97,108 +103,91 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-[var(--color-background)] flex flex-col items-center justify-center p-6 font-sans">
       {/* Header */}
-      <div className="text-center mb-10 animate-fade-in">
-        <div className="inline-flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-[var(--color-primary)] flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-violet-200">
-            P
-          </div>
-          <div className="text-left">
-            <h1 className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">
+      <div className="text-center mb-12 animate-fade-in">
+        <div className="flex flex-col items-center justify-center gap-1 mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#0a1128] flex items-center justify-center text-white text-xl font-bold shadow-md">
+              P
+            </div>
+            <h1 className="text-4xl font-bold text-slate-900 tracking-tight">
               P.A.C.T.
             </h1>
-            <p className="text-xs text-[var(--color-text-muted)] -mt-0.5">
-              Payments Automated Commerce & Tax
-            </p>
           </div>
+          <p className="text-[10px] sm:text-xs font-semibold text-slate-600 tracking-[0.2em] mt-1 uppercase">
+            Payments Automated Commerce & Tax
+          </p>
         </div>
-        <p className="text-sm text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
-          Digital Payment & Financial Automation Platform for B2B commerce with
-          GPay integration, automated GST distribution, and AI-powered tax compliance.
+        <p className="text-[13px] sm:text-sm text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          Digital Payment & Financial Automation Platform for B2B commerce with GPay<br className="hidden sm:block" />
+          integration, automated GST distribution, and AI-powered tax compliance.
         </p>
       </div>
 
       {/* User Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl w-full">
-        {users.map((user, idx) => (
-          <button
-            key={user.username}
-            id={`login-${user.username}`}
-            onClick={() => handleLogin(user)}
-            disabled={!!loadingUser}
-            className={`text-left bg-white rounded-2xl border border-[var(--color-border)] p-5 transition-all hover:shadow-lg hover:-translate-y-1 disabled:opacity-60 disabled:cursor-wait animate-fade-in group`}
-            style={{ animationDelay: `${idx * 100}ms` }}
-          >
-            {/* Emoji & Role */}
-            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${user.gradient} flex items-center justify-center text-2xl mb-4 group-hover:scale-105 transition-transform`}>
-              {user.emoji}
-            </div>
-
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1">
-              {user.name}
-            </h3>
-            <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed mb-4">
-              {user.description}
-            </p>
-
-            {/* Credentials */}
-            <div className="bg-[var(--color-surface-subtle)] rounded-lg p-2.5 mb-3">
-              <div className="flex justify-between text-[10px]">
-                <span className="text-[var(--color-text-muted)]">User</span>
-                <span className="font-mono font-medium text-[var(--color-text-primary)]">{user.username}</span>
-              </div>
-              <div className="flex justify-between text-[10px] mt-1">
-                <span className="text-[var(--color-text-muted)]">Pass</span>
-                <span className="font-mono font-medium text-[var(--color-text-primary)]">{user.password}</span>
-              </div>
-            </div>
-
-            {/* Login Button */}
-            <div
-              className="w-full text-center py-2 rounded-lg text-xs font-medium text-white transition-all"
-              style={{ backgroundColor: user.color }}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1200px] w-full">
+        {users.map((user, idx) => {
+          const Icon = user.icon;
+          return (
+            <button
+              key={user.username}
+              id={`login-${user.username}`}
+              onClick={() => handleLogin(user)}
+              disabled={!!loadingUser}
+              className={`text-left bg-white rounded-xl border border-slate-200 p-6 transition-all hover:shadow-xl hover:-translate-y-1 disabled:opacity-60 disabled:cursor-wait animate-fade-in group flex flex-col`}
+              style={{ animationDelay: `${idx * 100}ms` }}
             >
-              {loadingUser === user.username ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Signing in...
-                </span>
-              ) : (
-                `Login as ${user.name}`
-              )}
-            </div>
-          </button>
-        ))}
+              {/* Icon */}
+              <div className={`w-12 h-12 rounded-lg ${user.iconBg} ${user.iconColor} flex items-center justify-center mb-5 group-hover:scale-105 transition-transform`}>
+                <Icon strokeWidth={2} className="w-6 h-6" />
+              </div>
+
+              <h3 className="text-base font-semibold text-slate-900 mb-2">
+                {user.name}
+              </h3>
+              <p className="text-[13px] text-slate-500 leading-relaxed mb-6 flex-grow">
+                {user.description}
+              </p>
+
+              {/* Credentials */}
+              <div className="bg-slate-100/80 rounded-md p-3 mb-4 w-full">
+                <div className="flex justify-between items-center text-[11px] mb-1.5">
+                  <span className="text-slate-500 font-medium">User</span>
+                  <span className="font-mono font-medium text-slate-800">{user.username}</span>
+                </div>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-slate-500 font-medium">Pass</span>
+                  <span className="font-mono font-medium text-slate-800">{user.password}</span>
+                </div>
+              </div>
+
+              {/* Login Button */}
+              <div
+                className="w-full text-center py-2.5 rounded-md text-[13px] font-medium text-white transition-all shadow-sm"
+                style={{ backgroundColor: user.btnColor }}
+              >
+                {loadingUser === user.username ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Signing in...
+                  </span>
+                ) : (
+                  `Login as ${user.name === "Raw Material Supplier" ? "Supplier" : user.name}`
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Error */}
       {error && (
-        <div className="mt-4 px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-600 font-medium animate-fade-in">
+        <div className="mt-6 px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-600 font-medium animate-fade-in">
           {error}
         </div>
       )}
-
-      {/* Footer */}
-      <div className="mt-10 text-center space-y-2">
-        <div className="flex items-center justify-center gap-4 text-[10px] text-[var(--color-text-muted)]">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            GPay (UPI) Integration
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-            Indian GST Compliance
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-            AI Tax Engine
-          </span>
-        </div>
-        <p className="text-[10px] text-[var(--color-text-muted)]">
-          ISO 20022 Compliant · Multi-party automated settlement
-        </p>
-      </div>
     </div>
   );
 }
+
