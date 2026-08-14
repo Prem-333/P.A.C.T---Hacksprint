@@ -6,7 +6,7 @@
  * view revenue breakdown, track cash deposits, and see tax warnings.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TaxWarningBanner } from "@/components/shared/TaxWarningBanner";
 import { useToast } from "@/components/ui/Toast";
@@ -185,7 +185,7 @@ export function SellerView({
             <h3 className="text-[15px] font-bold text-slate-900">Payment Distribution Flow</h3>
           </div>
           
-          <div className="flex flex-1 items-center justify-between gap-2 px-2">
+          <div className="flex flex-1 items-center justify-between w-full px-2">
             {[
               { 
                 step: "1", 
@@ -224,11 +224,11 @@ export function SellerView({
                 isFinal: true
               },
             ].map((item, i) => (
-              <div key={item.step} className="flex items-center">
+              <Fragment key={item.step}>
                 <div 
-                  className={`flex flex-col items-center justify-center text-center p-4 rounded-md w-[120px] h-[140px] transition-all duration-300 ${
+                  className={`flex flex-col items-center justify-center text-center p-3 sm:p-4 rounded-md w-[100px] sm:w-[120px] h-[140px] transition-all duration-300 ${
                     item.isFinal 
-                      ? "bg-slate-50/80 border-b-2 border-b-[#0c6a54] shadow-sm" 
+                      ? "bg-slate-50 border-b-2 border-b-[#0c6a54] shadow-sm" 
                       : "bg-slate-50/50 border border-slate-100"
                   }`}
                 >
@@ -237,9 +237,9 @@ export function SellerView({
                   <span className="text-[10px] text-slate-500 font-medium whitespace-pre-line leading-tight">{item.status}</span>
                 </div>
                 {i < 4 && (
-                  <span className="text-slate-300 mx-3">→</span>
+                  <span className="text-slate-400">→</span>
                 )}
-              </div>
+              </Fragment>
             ))}
           </div>
         </div>
