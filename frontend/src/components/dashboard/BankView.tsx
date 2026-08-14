@@ -74,7 +74,7 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
           <div className="space-y-4">
             {/* Main Users */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {balances.users.map((user) => (
+              {(balances.users || []).map((user) => (
                 <div key={user.username} className="p-4 rounded-xl bg-[var(--color-surface-subtle)] border border-[var(--color-border)]">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-lg bg-white border border-[var(--color-border)] flex items-center justify-center text-lg">
