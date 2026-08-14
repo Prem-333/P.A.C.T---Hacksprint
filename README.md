@@ -236,9 +236,3 @@ frontend/
 │   └── types/index.ts                # Shared TypeScript types
 └── package.json
 ```
-
----
-<div align="center">
-<i>Built with absolute precision for the Hack Sprint.</i><br>
-<b>P.A.C.T. Team</b>
-</div>
