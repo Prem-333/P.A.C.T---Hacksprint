@@ -226,7 +226,7 @@ export function SellerView({
             ].map((item, i) => (
               <div key={item.step} className="flex items-center">
                 <div 
-                  className={`flex flex-col items-center text-center p-4 rounded-md w-[120px] transition-all duration-300 ${
+                  className={`flex flex-col items-center justify-center text-center p-4 rounded-md w-[120px] h-[140px] transition-all duration-300 ${
                     item.isFinal 
                       ? "bg-slate-50/80 border-b-2 border-b-[#0c6a54] shadow-sm" 
                       : "bg-slate-50/50 border border-slate-100"

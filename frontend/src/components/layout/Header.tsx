@@ -7,7 +7,7 @@
  */
 
 import { BellIcon, LogOutIcon } from "@/components/ui/Icons";
-import { ShoppingBag, User } from "lucide-react";
+import { ShoppingBag, User, Store } from "lucide-react";
 
 interface HeaderProps {
   viewTitle: string;
@@ -39,6 +39,7 @@ export function Header({
       <div className="flex items-center gap-8 h-full">
         <div className="flex items-center gap-2">
           {userRole === 'customer' && <ShoppingBag className="w-5 h-5 text-[#0a2540]" strokeWidth={2.5} />}
+          {userRole === 'seller' && <Store className="w-5 h-5 text-[#0a2540]" strokeWidth={2.5} />}
           <span className="text-[17px] font-bold text-slate-900">
             {cleanTitle}
           </span>
