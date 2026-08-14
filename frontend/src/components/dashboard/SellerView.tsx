@@ -107,15 +107,35 @@ export function SellerView({
     }
   }, [onRefresh, toast]);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-6"
+    >
       {/* Tax Warnings */}
       {taxWarnings && taxWarnings.warnings.length > 0 && (
-        <TaxWarningBanner warnings={taxWarnings.warnings} />
+        <motion.div variants={itemVariants}>
+          <TaxWarningBanner warnings={taxWarnings.warnings} />
+        </motion.div>
       )}
 
       {/* Monthly Settlement Banner */}
-      <div className="bg-white rounded-md border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <motion.div variants={itemVariants} className="bg-white rounded-md border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-600">
@@ -147,12 +167,12 @@ export function SellerView({
             {isSettling ? "Processing..." : "Release Monthly Funds"}
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Monthly Breakdown Cards (Profit & Distribution) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Net Profit */}
-        <div className="bg-emerald-50/50 rounded-md border border-emerald-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+        <motion.div whileHover={{ y: -2 }} className="bg-emerald-50/50 rounded-md border border-emerald-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px] transition-shadow hover:shadow-md">
           <div>
             <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider mb-2">Your Net Profit</p>
             <p className="text-2xl font-bold text-emerald-700">₹{netProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
@@ -161,10 +181,10 @@ export function SellerView({
             <TrendingUp className="w-3.5 h-3.5" />
             <span>After deductions</span>
           </div>
-        </div>
+        </motion.div>
 
         {/* Taxes */}
-        <div className="bg-orange-50/50 rounded-md border border-orange-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+        <motion.div whileHover={{ y: -2 }} className="bg-orange-50/50 rounded-md border border-orange-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px] transition-shadow hover:shadow-md">
           <div>
             <p className="text-[11px] font-semibold text-orange-600 uppercase tracking-wider mb-2">Taxes (GST)</p>
             <p className="text-2xl font-bold text-orange-700">₹{taxAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
@@ -173,10 +193,10 @@ export function SellerView({
             <Landmark className="w-3.5 h-3.5" />
             <span>Auto-remitted</span>
           </div>
-        </div>
+        </motion.div>
 
         {/* Platform Fees */}
-        <div className="bg-blue-50/50 rounded-md border border-blue-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+        <motion.div whileHover={{ y: -2 }} className="bg-blue-50/50 rounded-md border border-blue-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px] transition-shadow hover:shadow-md">
           <div>
             <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider mb-2">Platform Fees</p>
             <p className="text-2xl font-bold text-blue-700">₹{platformFee.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
@@ -185,10 +205,10 @@ export function SellerView({
             <Network className="w-3.5 h-3.5" />
             <span>P.A.C.T. network</span>
           </div>
-        </div>
+        </motion.div>
 
         {/* Suppliers */}
-        <div className="bg-purple-50/50 rounded-md border border-purple-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+        <motion.div whileHover={{ y: -2 }} className="bg-purple-50/50 rounded-md border border-purple-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px] transition-shadow hover:shadow-md">
           <div>
             <p className="text-[11px] font-semibold text-purple-600 uppercase tracking-wider mb-2">Suppliers</p>
             <p className="text-2xl font-bold text-purple-700">₹{supplierAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
@@ -197,13 +217,13 @@ export function SellerView({
             <Package className="w-3.5 h-3.5" />
             <span>Raw materials</span>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Revenue Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Total Balance */}
-        <div className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+        <motion.div whileHover={{ y: -2 }} className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px] transition-shadow hover:shadow-md">
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Settled Balance</p>
             <p className="text-3xl font-bold text-slate-900">₹{parseFloat(balance).toLocaleString()}</p>
@@ -214,10 +234,10 @@ export function SellerView({
               Authorized Seller
             </span>
           </div>
-        </div>
+        </motion.div>
 
         {/* GPay Revenue */}
-        <div className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+        <motion.div whileHover={{ y: -2 }} className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px] transition-shadow hover:shadow-md">
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">GPay Collected (Monthly)</p>
             <p className="text-3xl font-bold text-[#0a2540]">₹{gpayRevenue.toLocaleString()}</p>
@@ -226,10 +246,10 @@ export function SellerView({
             <Smartphone className="w-3.5 h-3.5" />
             <span>Digital payments</span>
           </div>
-        </div>
+        </motion.div>
 
         {/* Pending Cash Deposit Amount */}
-        <div className={`bg-white rounded-md border ${pendingCashAmount > 0 ? 'border-amber-200 bg-amber-50/10' : 'border-slate-200'} p-5 flex flex-col justify-between shadow-sm min-h-[120px]`}>
+        <motion.div whileHover={{ y: -2 }} className={`bg-white rounded-md border ${pendingCashAmount > 0 ? 'border-amber-200 bg-amber-50/10' : 'border-slate-200'} p-5 flex flex-col justify-between shadow-sm min-h-[120px] transition-shadow hover:shadow-md`}>
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Cash To Deposit</p>
             <p className={`text-3xl font-bold ${pendingCashAmount > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>₹{pendingCashAmount.toLocaleString()}</p>
@@ -238,12 +258,12 @@ export function SellerView({
             <Landmark className="w-3.5 h-3.5" />
             <span>Physical cash → Bank</span>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Sales (col-span-1) */}
-        <div id="recent-sales" className="bg-white rounded-md border border-slate-200 p-6 shadow-sm col-span-1 flex flex-col">
+        <motion.div whileHover={{ y: -2 }} className="bg-white rounded-md border border-slate-200 p-6 shadow-sm col-span-1 flex flex-col transition-shadow hover:shadow-md">
           <div className="flex items-center gap-2 mb-6">
             <TrendingUp className="w-5 h-5 text-slate-700" strokeWidth={2} />
             <h3 className="text-[15px] font-bold text-slate-900">Recent Sales</h3>
@@ -292,10 +312,10 @@ export function SellerView({
               </AnimatePresence>
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Settlement Flow (col-span-2) */}
-        <div className="bg-white rounded-md border border-slate-200 p-6 shadow-sm col-span-2 flex flex-col">
+        <motion.div whileHover={{ y: -2 }} className="bg-white rounded-md border border-slate-200 p-6 shadow-sm col-span-2 flex flex-col transition-shadow hover:shadow-md">
           <div className="flex items-center gap-2 mb-8">
             <Network className="w-5 h-5 text-slate-700" strokeWidth={2} />
             <h3 className="text-[15px] font-bold text-slate-900">Payment Distribution Flow</h3>
@@ -358,9 +378,9 @@ export function SellerView({
               </Fragment>
             ))}
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
-    </div>
+    </motion.div>
   );
 }
