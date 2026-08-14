@@ -150,26 +150,52 @@ export function SellerView({
       </div>
 
       {/* Monthly Breakdown Cards (Profit & Distribution) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-emerald-50/50 rounded-md border border-emerald-100 p-5 flex items-center justify-between shadow-sm">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Net Profit */}
+        <div className="bg-emerald-50/50 rounded-md border border-emerald-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
           <div>
-            <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider mb-1">Your Net Profit</p>
+            <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider mb-2">Your Net Profit</p>
             <p className="text-2xl font-bold text-emerald-700">₹{netProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-            <p className="text-xs text-emerald-600/70 mt-1 font-medium">Margin after all deductions</p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-            <TrendingUp className="w-6 h-6" />
+          <div className="mt-4 flex items-center gap-1.5 text-[11px] text-emerald-600/70 font-medium">
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>After deductions</span>
           </div>
         </div>
 
-        <div className="bg-orange-50/50 rounded-md border border-orange-100 p-5 flex items-center justify-between shadow-sm">
+        {/* Taxes */}
+        <div className="bg-orange-50/50 rounded-md border border-orange-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
           <div>
-            <p className="text-[11px] font-semibold text-orange-600 uppercase tracking-wider mb-1">To Be Distributed</p>
-            <p className="text-2xl font-bold text-orange-700">₹{totalDistributed.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-            <p className="text-xs text-orange-600/70 mt-1 font-medium">Taxes, platform fees, suppliers</p>
+            <p className="text-[11px] font-semibold text-orange-600 uppercase tracking-wider mb-2">Taxes (GST)</p>
+            <p className="text-2xl font-bold text-orange-700">₹{taxAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
-            <Network className="w-6 h-6" />
+          <div className="mt-4 flex items-center gap-1.5 text-[11px] text-orange-600/70 font-medium">
+            <Landmark className="w-3.5 h-3.5" />
+            <span>Auto-remitted</span>
+          </div>
+        </div>
+
+        {/* Platform Fees */}
+        <div className="bg-blue-50/50 rounded-md border border-blue-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+          <div>
+            <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider mb-2">Platform Fees</p>
+            <p className="text-2xl font-bold text-blue-700">₹{platformFee.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+          </div>
+          <div className="mt-4 flex items-center gap-1.5 text-[11px] text-blue-600/70 font-medium">
+            <Network className="w-3.5 h-3.5" />
+            <span>P.A.C.T. network</span>
+          </div>
+        </div>
+
+        {/* Suppliers */}
+        <div className="bg-purple-50/50 rounded-md border border-purple-100 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+          <div>
+            <p className="text-[11px] font-semibold text-purple-600 uppercase tracking-wider mb-2">Suppliers</p>
+            <p className="text-2xl font-bold text-purple-700">₹{supplierAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+          </div>
+          <div className="mt-4 flex items-center gap-1.5 text-[11px] text-purple-600/70 font-medium">
+            <Package className="w-3.5 h-3.5" />
+            <span>Raw materials</span>
           </div>
         </div>
       </div>
