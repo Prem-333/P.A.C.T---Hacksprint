@@ -84,6 +84,14 @@ export function Header({
           <BellIcon size={20} />
         </button>
 
+        {/* Role Badge (Seller mockup specific) */}
+        {userRole === 'seller' && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-[12px] font-semibold text-slate-700">
+            <ShoppingBag className="w-3.5 h-3.5" />
+            Seller
+          </div>
+        )}
+
         <div className="w-px h-8 bg-slate-200 mx-1"></div>
 
         {/* User Info */}
@@ -104,9 +112,10 @@ export function Header({
         <button
           id="btn-logout"
           onClick={onLogout}
-          className="flex items-center gap-1.5 ml-2 px-3 py-1.5 rounded-md text-[12px] text-slate-500 hover:text-rose-600 hover:bg-rose-50 font-medium transition-colors"
+          className="flex items-center gap-2 ml-2 px-3 py-1.5 rounded-md text-[13px] text-slate-500 hover:text-rose-600 hover:bg-rose-50 font-medium transition-colors"
         >
           <LogOutIcon size={16} />
+          <span>Logout</span>
         </button>
       </div>
     </header>

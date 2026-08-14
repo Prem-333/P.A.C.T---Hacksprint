@@ -8,12 +8,20 @@
 
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { FeeBreakdown } from "@/components/shared/FeeBreakdown";
-import { EscrowTimeline } from "@/components/shared/EscrowTimeline";
 import { TaxWarningBanner } from "@/components/shared/TaxWarningBanner";
 import { useToast } from "@/components/ui/Toast";
 import type { TaxWarningData, TransactionEntry } from "@/hooks/useDashboard";
+import { 
+  Smartphone, 
+  Banknote, 
+  Landmark, 
+  TrendingUp,
+  Network,
+  User,
+  Diamond,
+  Package,
+  CheckCircle2
+} from "lucide-react";
 
 interface SellerViewProps {
   balance: string;
@@ -39,44 +47,6 @@ export function SellerView({
   onRefresh,
 }: SellerViewProps) {
   const { toast } = useToast();
-  const [escrowId, setEscrowId] = useState("");
-  const [deliveryProof, setDeliveryProof] = useState("");
-  const [isConfirming, setIsConfirming] = useState(false);
-
-  const handleConfirmDelivery = useCallback(async () => {
-    if (!escrowId || !deliveryProof) {
-      toast({ type: "error", message: "Missing fields", description: "Please enter escrow ID and delivery proof." });
-      return;
-    }
-    setIsConfirming(true);
-    try {
-      const res = await fetch("/api/escrow/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ escrowId: parseInt(escrowId), deliveryProof }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast({ type: "success", message: "Delivery Confirmed", description: data.message });
-        setEscrowId("");
-        setDeliveryProof("");
-        onRefresh();
-        
-        setTimeout(() => {
-          document.getElementById("recent-sales")?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
-        }, 300);
-      } else {
-        toast({ type: "error", message: "Confirmation Failed", description: data.error });
-      }
-    } catch {
-      toast({ type: "error", message: "Network Error", description: "Failed to connect." });
-    } finally {
-      setIsConfirming(false);
-    }
-  }, [escrowId, deliveryProof, onRefresh, toast]);
 
   // Recent sales from transactions
   const recentSales = transactions
@@ -95,66 +65,85 @@ export function SellerView({
     (tx) => tx.metadata?.paymentMethod === "cash" && tx.metadata?.cashDepositPending
   );
 
-  const myEscrows = escrows.filter(
-    (e) => (e.seller as string)?.toLowerCase() === address.toLowerCase()
-  );
-  const pendingEscrows = myEscrows.filter((e) => e.status === "PENDING");
-
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Tax Warnings */}
       {taxWarnings && taxWarnings.warnings.length > 0 && (
         <TaxWarningBanner warnings={taxWarnings.warnings} />
       )}
 
-      {/* Revenue Overview */}
-      <motion.div
-        initial="hidden"
-        animate="show"
-        variants={{
-          hidden: { opacity: 0 },
-          show: { opacity: 1, transition: { staggerChildren: 0.1 } }
-        }}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4"
-      >
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
-          <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Total Balance</p>
-          <p className="text-2xl font-bold text-[var(--color-text-primary)]">₹{parseFloat(balance).toLocaleString()}</p>
-          <StatusBadge label="Authorized Seller" variant="success" icon="✓" />
-        </motion.div>
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
-          <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">GPay Revenue</p>
-          <p className="text-2xl font-bold text-[var(--color-primary)]">₹{gpayRevenue.toLocaleString()}</p>
-          <span className="text-[10px] text-[var(--color-text-muted)]">📱 Digital payments</span>
-        </motion.div>
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
-          <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Cash Revenue</p>
-          <p className="text-2xl font-bold text-emerald-600">₹{cashRevenue.toLocaleString()}</p>
-          <span className="text-[10px] text-[var(--color-text-muted)]">💵 Cash collected</span>
-        </motion.div>
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
-          <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Pending Deposits</p>
-          <p className="text-2xl font-bold text-amber-500">{pendingCashDeposits.length}</p>
-          <span className="text-[10px] text-[var(--color-text-muted)]">🏦 Cash → Bank</span>
-        </motion.div>
-      </motion.div>
+      {/* Revenue Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Total Balance */}
+        <div className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+          <div>
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Balance</p>
+            <p className="text-3xl font-bold text-slate-900">₹{parseFloat(balance).toLocaleString()}</p>
+          </div>
+          <div className="mt-4 flex items-center">
+             <span className="flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100 font-medium w-fit">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Authorized Seller
+            </span>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Recent Sales */}
-        <div id="recent-sales" className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">📊 Recent Sales</h3>
+        {/* GPay Revenue */}
+        <div className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+          <div>
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">GPay Revenue</p>
+            <p className="text-3xl font-bold text-[#0a2540]">₹{gpayRevenue.toLocaleString()}</p>
+          </div>
+          <div className="mt-4 flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>Digital payments</span>
+          </div>
+        </div>
+
+        {/* Cash Revenue */}
+        <div className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+          <div>
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Cash Revenue</p>
+            <p className="text-3xl font-bold text-[#0c6a54]">₹{cashRevenue.toLocaleString()}</p>
+          </div>
+          <div className="mt-4 flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+            <Banknote className="w-3.5 h-3.5" />
+            <span>Cash collected</span>
+          </div>
+        </div>
+
+        {/* Pending Deposits */}
+        <div className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px]">
+          <div>
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Pending Deposits</p>
+            <p className="text-3xl font-bold text-amber-500">{pendingCashDeposits.length}</p>
+          </div>
+          <div className="mt-4 flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+            <Landmark className="w-3.5 h-3.5" />
+            <span>Cash → Bank</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Sales (col-span-1) */}
+        <div id="recent-sales" className="bg-white rounded-md border border-slate-200 p-6 shadow-sm col-span-1 flex flex-col">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp className="w-5 h-5 text-slate-700" strokeWidth={2} />
+            <h3 className="text-[15px] font-bold text-slate-900">Recent Sales</h3>
+          </div>
+          
           {recentSales.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-[var(--color-border)] rounded-xl bg-[var(--color-surface-subtle)]/50">
-              <span className="text-4xl mb-3 opacity-80 hover:scale-110 transition-transform cursor-default">🏷️</span>
-              <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
+            <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-slate-200 rounded-lg bg-slate-50/50 flex-1">
+              <p className="text-sm font-medium text-slate-900 mb-1">
                 No sales yet
               </p>
-              <p className="text-xs text-[var(--color-text-muted)] max-w-[250px] text-center">
-                Waiting for customers to make their first purchase. Your sales will appear here!
+              <p className="text-xs text-slate-500 max-w-[200px] text-center">
+                Your sales will appear here once customers make a purchase.
               </p>
             </div>
           ) : (
-            <div className="space-y-2 max-h-[320px] overflow-y-auto pr-2">
+            <div className="space-y-3 overflow-y-auto pr-2 max-h-[300px]">
               <AnimatePresence>
                 {recentSales.map((sale) => (
                   <motion.div
@@ -163,21 +152,23 @@ export function SellerView({
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="flex items-center justify-between p-3 rounded-lg bg-[var(--color-surface-subtle)] border border-[var(--color-border)]"
+                    className="flex items-center justify-between p-3 rounded-md bg-slate-50/50 border border-slate-100"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-lg">{sale.type === "GPAY_PAYMENT" ? "📱" : "💵"}</span>
+                      <div className="w-8 h-8 rounded bg-slate-200 flex items-center justify-center text-slate-500">
+                        {sale.type === "GPAY_PAYMENT" ? <Smartphone className="w-4 h-4" /> : <Banknote className="w-4 h-4" />}
+                      </div>
                       <div>
-                        <p className="text-xs font-medium text-[var(--color-text-primary)]">{sale.metadata?.productName || "Sale"}</p>
-                        <p className="text-[10px] text-[var(--color-text-muted)]">
+                        <p className="text-[13px] font-semibold text-slate-900">{sale.metadata?.productName || "Sale"}</p>
+                        <p className="text-[10px] text-slate-500 font-medium">
                           {sale.type === "GPAY_PAYMENT" ? "GPay" : "Cash"} · {new Date(sale.timestamp).toLocaleTimeString()}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-emerald-600">+₹{parseFloat(sale.amount).toLocaleString()}</p>
+                      <p className="text-[13px] font-bold text-[#0c6a54]">+₹{parseFloat(sale.amount).toLocaleString()}</p>
                       {sale.metadata?.gstBreakdown && (
-                        <p className="text-[9px] text-[var(--color-text-muted)]">GST: ₹{sale.metadata.gstBreakdown.total.toFixed(2)}</p>
+                        <p className="text-[10px] text-slate-500 font-medium">GST: ₹{sale.metadata.gstBreakdown.total.toFixed(2)}</p>
                       )}
                     </div>
                   </motion.div>
@@ -187,52 +178,73 @@ export function SellerView({
           )}
         </div>
 
-
-      </div>
-
-      {/* Cash Deposit Tracker */}
-      {pendingCashDeposits.length > 0 && (
-        <div className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">🏦 Pending Cash Deposits</h3>
-          <p className="text-xs text-amber-600 mb-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
-            ⚠️ Cash received from customers has been debited from your bank account for digital distribution. Please deposit the physical cash at your bank.
-          </p>
-          <div className="space-y-2">
-            {pendingCashDeposits.map((dep) => (
-              <div key={dep.txHash} className="flex items-center justify-between p-3 rounded-lg bg-amber-50/50 border border-amber-200">
-                <div>
-                  <p className="text-xs font-medium text-[var(--color-text-primary)]">{dep.metadata?.productName}</p>
-                  <p className="text-[10px] text-[var(--color-text-muted)]">{new Date(dep.timestamp).toLocaleString()}</p>
+        {/* Settlement Flow (col-span-2) */}
+        <div className="bg-white rounded-md border border-slate-200 p-6 shadow-sm col-span-2 flex flex-col">
+          <div className="flex items-center gap-2 mb-8">
+            <Network className="w-5 h-5 text-slate-700" strokeWidth={2} />
+            <h3 className="text-[15px] font-bold text-slate-900">Payment Distribution Flow</h3>
+          </div>
+          
+          <div className="flex flex-1 items-center justify-between gap-2 px-2">
+            {[
+              { 
+                step: "1", 
+                label: "Customer\nPays", 
+                icon: User, 
+                status: "GPay /\nCash",
+                iconColor: "text-[#0a2540]"
+              },
+              { 
+                step: "2", 
+                label: "GST\nCollected", 
+                icon: Landmark, 
+                status: "CGST +\nSGST",
+                iconColor: "text-slate-500"
+              },
+              { 
+                step: "3", 
+                label: "Platform\nFee", 
+                icon: Diamond, 
+                status: "1%\ndeducted",
+                iconColor: "text-blue-500"
+              },
+              { 
+                step: "4", 
+                label: "Suppliers\nPaid", 
+                icon: Package, 
+                status: "Raw\nmaterials",
+                iconColor: "text-orange-500"
+              },
+              { 
+                step: "5", 
+                label: "Seller\nReceives", 
+                icon: Banknote, 
+                status: "Net margin",
+                iconColor: "text-amber-500",
+                isFinal: true
+              },
+            ].map((item, i) => (
+              <div key={item.step} className="flex items-center">
+                <div 
+                  className={`flex flex-col items-center text-center p-4 rounded-md w-[120px] transition-all duration-300 ${
+                    item.isFinal 
+                      ? "bg-slate-50/80 border-b-2 border-b-[#0c6a54] shadow-sm" 
+                      : "bg-slate-50/50 border border-slate-100"
+                  }`}
+                >
+                  <item.icon className={`w-6 h-6 mb-3 ${item.iconColor}`} strokeWidth={2} />
+                  <span className="text-[12px] font-bold text-slate-900 mb-2 leading-tight whitespace-pre-line">{item.label}</span>
+                  <span className="text-[10px] text-slate-500 font-medium whitespace-pre-line leading-tight">{item.status}</span>
                 </div>
-                <span className="text-sm font-semibold text-amber-600">₹{parseFloat(dep.amount).toLocaleString()}</span>
+                {i < 4 && (
+                  <span className="text-slate-300 mx-3">→</span>
+                )}
               </div>
             ))}
           </div>
         </div>
-      )}
-
-      {/* Settlement Flow */}
-      <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">🔗 Payment Distribution Flow</h3>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-          {[
-            { step: "1", label: "Customer Pays", icon: "👤", status: "GPay / Cash" },
-            { step: "2", label: "GST Collected", icon: "🏛️", status: "CGST + SGST" },
-            { step: "3", label: "Platform Fee", icon: "💎", status: "1% deducted" },
-            { step: "4", label: "Suppliers Paid", icon: "📦", status: "Raw materials" },
-            { step: "5", label: "Seller Receives", icon: "💰", status: "Net margin" },
-          ].map((item, i) => (
-            <div key={item.step} className="flex flex-col items-center text-center p-3 rounded-lg bg-[var(--color-surface-subtle)] border border-[var(--color-border)] relative hover:-translate-y-1 hover:shadow-md hover:border-[var(--color-primary)] transition-all duration-300 group cursor-default">
-              <span className="text-2xl mb-2 group-hover:scale-125 transition-transform">{item.icon}</span>
-              <span className="text-xs font-medium text-[var(--color-text-primary)] mb-0.5 group-hover:text-[var(--color-primary)] transition-colors">{item.label}</span>
-              <span className="text-[10px] text-[var(--color-text-muted)]">{item.status}</span>
-              {i < 4 && (
-                <span className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] text-lg">→</span>
-              )}
-            </div>
-          ))}
-        </div>
       </div>
+
     </div>
   );
 }
