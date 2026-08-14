@@ -11,6 +11,7 @@ import { CustomerView } from "@/components/dashboard/CustomerView";
 import { TransactionLog } from "@/components/shared/TransactionLog";
 import { useDashboard } from "@/hooks/useDashboard";
 import { DashboardSkeleton } from "@/components/shared/DashboardSkeleton";
+import type { ISO20022Message } from "@/types";
 
 export default function CustomerPage() {
   const { user, balances, products, taxWarnings, transactions, isLoading, fetchData, handleLogout } = useDashboard("customer");
