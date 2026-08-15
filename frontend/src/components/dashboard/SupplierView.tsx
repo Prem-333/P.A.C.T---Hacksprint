@@ -42,7 +42,7 @@ export function SupplierView({ balances, transactions }: SupplierViewProps) {
     {
       name: "Fragrance Oil Supplier",
       type: "fragrance_oil",
-      emoji: "🌺",
+      emoji: "",
       color: "violet",
       description: "Essential fragrance oils, attar concentrates, synthetic aroma compounds",
       share: 50,
@@ -52,7 +52,7 @@ export function SupplierView({ balances, transactions }: SupplierViewProps) {
     {
       name: "Bottle Supplier",
       type: "bottles",
-      emoji: "🍶",
+      emoji: "",
       color: "blue",
       description: "Glass perfume bottles, spray mechanisms, atomizers, caps",
       share: 30,
@@ -62,7 +62,7 @@ export function SupplierView({ balances, transactions }: SupplierViewProps) {
     {
       name: "Packaging Supplier",
       type: "packaging",
-      emoji: "📦",
+      emoji: "",
       color: "amber",
       description: "Branded boxes, inserts, labels, cellophane wrap, shipping materials",
       share: 20,
@@ -177,7 +177,7 @@ export function SupplierView({ balances, transactions }: SupplierViewProps) {
 
       {/* Recent Supply Payments */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">💰 Payment History from Sales</h3>
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4"> Payment History from Sales</h3>
         {paymentTxs.length === 0 ? (
           <div className="text-center py-8 border border-dashed border-[var(--color-border)] rounded-lg">
             <p className="text-sm text-[var(--color-text-muted)]">No payments received yet. Waiting for product sales.</p>

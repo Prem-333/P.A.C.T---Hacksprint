@@ -46,7 +46,7 @@ export function LogisticsView() {
       {/* Period Toggle */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">📊 Logistics & Analytics</h2>
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]"> Logistics & Analytics</h2>
           <p className="text-xs text-[var(--color-text-muted)]">Sales performance, profitability, and cash flow analysis</p>
         </div>
         <div className="flex gap-1 bg-[var(--color-surface-subtle)] rounded-lg p-1 border border-[var(--color-border)]">
@@ -71,7 +71,7 @@ export function LogisticsView() {
         <MetricCard
           label="Total Revenue"
           value={`₹${analytics.totalRevenue.toLocaleString()}`}
-          icon="💰"
+          icon=""
           trend="up"
           trendValue="vs last period"
           color="text-[var(--color-primary)]"
@@ -79,7 +79,7 @@ export function LogisticsView() {
         <MetricCard
           label="Total Profit"
           value={`₹${analytics.totalProfit.toLocaleString()}`}
-          icon="📈"
+          icon=""
           trend={analytics.profitMargin > 40 ? "up" : "down"}
           trendValue={`${analytics.profitMargin}% margin`}
           color="text-emerald-600"
@@ -87,13 +87,13 @@ export function LogisticsView() {
         <MetricCard
           label="Orders"
           value={analytics.totalOrders.toString()}
-          icon="🛒"
+          icon=""
           subValue={`${period === "day" ? "today" : period === "week" ? "this week" : "this month"}`}
         />
         <MetricCard
           label="GST Collected"
           value={`₹${analytics.gstCollected.total.toLocaleString()}`}
-          icon="🏛️"
+          icon="️"
           subValue={`CGST: ₹${analytics.gstCollected.cgst.toFixed(0)} · SGST: ₹${analytics.gstCollected.sgst.toFixed(0)}`}
           color="text-amber-600"
         />
@@ -102,7 +102,7 @@ export function LogisticsView() {
       {/* Revenue & Profit Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">💰 Revenue Trend</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4"> Revenue Trend</h3>
           <BarChart
             data={analytics.revenueData}
             color="var(--color-primary)"
@@ -110,7 +110,7 @@ export function LogisticsView() {
           />
         </div>
         <div className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">📈 Profit Trend</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4"> Profit Trend</h3>
           <BarChart
             data={analytics.profitData}
             color="var(--color-accent-emerald)"
@@ -121,13 +121,13 @@ export function LogisticsView() {
 
       {/* Cash Flow */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">💸 Cash Flow (Inflow vs Outflow)</h3>
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4"> Cash Flow (Inflow vs Outflow)</h3>
         <CashFlowChart data={analytics.cashFlow} height={200} />
       </div>
 
       {/* Product Performance */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">🏆 Product Performance</h3>
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4"> Product Performance</h3>
         {analytics.productPerformance.length === 0 ? (
           <p className="text-xs text-[var(--color-text-muted)] text-center py-6">No product data available for this period.</p>
         ) : (
@@ -176,7 +176,7 @@ export function LogisticsView() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Supplier Payments */}
         <div className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">📦 Supplier Payments</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4"> Supplier Payments</h3>
           <div className="space-y-3">
             {analytics.supplierPayments.map((sp) => {
               const maxPay = Math.max(...analytics.supplierPayments.map((s) => s.total), 1);
@@ -201,7 +201,7 @@ export function LogisticsView() {
 
         {/* Top Products */}
         <div className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">⭐ Top Products</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4"> Top Products</h3>
           <div className="space-y-3">
             {analytics.topProducts.map((tp, idx) => (
               <div key={tp.name} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--color-surface-subtle)] transition-colors">

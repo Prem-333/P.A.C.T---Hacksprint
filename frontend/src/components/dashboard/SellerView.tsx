@@ -391,7 +391,7 @@ export function SellerView({
       {pendingEscrows.length > 0 && (
         <motion.div variants={itemVariants} className="bg-white rounded-md border border-slate-200 p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-6">
-            <span className="text-base">🔐</span>
+            <span className="text-base"></span>
             <h3 className="text-[15px] font-bold text-slate-900">Pending Escrow Consensus</h3>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 font-semibold ml-2">
               {pendingEscrows.length} pending
