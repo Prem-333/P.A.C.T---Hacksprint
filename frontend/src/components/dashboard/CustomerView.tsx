@@ -228,7 +228,7 @@ export function CustomerView({
                     <div className="flex items-center gap-2 mb-3">
                       <FileJson className="w-4 h-4 text-slate-400" />
                       <span className="text-[11px] font-medium text-slate-500">ISO 20022 Transaction Log</span>
-                      <span className="compliance-badge ml-2">✓ ISO 20022</span>
+                      <span className="compliance-badge ml-2"> ISO 20022</span>
                       <span className="ml-auto text-[10px] text-slate-400 font-mono px-2 py-0.5 bg-white border border-slate-100 rounded-md">
                         pacs.008.001.08
                       </span>

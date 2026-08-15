@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { LiveActivityFeed } from "@/components/shared/LiveActivityFeed";
 import { SettlementSankey } from "@/components/shared/SettlementSankey";
+import { BuildingIcon, UserIcon, PackageIcon, WalletIcon, ShieldCheckIcon, ActivityIcon, CheckIcon } from "@/components/ui/Icons";
 import type { BalanceData, TransactionEntry } from "@/hooks/useDashboard";
 
 interface BankViewProps {
@@ -100,7 +101,10 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
 
       {/* All Accounts */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">🏦 All Account Balances</h3>
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)] mb-4">
+          <WalletIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
+          All Account Balances
+        </h3>
         {balances ? (
           <div className="space-y-4">
             {/* Main Users */}
@@ -108,8 +112,8 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
               {(balances.users || []).map((user) => (
                 <div key={user.username} className="p-4 rounded-xl bg-[var(--color-surface-subtle)] border border-[var(--color-border)]">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-white border border-[var(--color-border)] flex items-center justify-center text-lg">
-                      {user.role === "customer" ? "👤" : user.role === "seller" ? "🏪" : user.role === "bank" ? "🏦" : "📦"}
+                    <div className="w-10 h-10 rounded-lg bg-white border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-primary)]">
+                      {user.role === "customer" ? <UserIcon size={20} /> : user.role === "seller" ? <BuildingIcon size={20} /> : user.role === "bank" ? <BuildingIcon size={20} /> : <PackageIcon size={20} />}
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[var(--color-text-primary)]">{user.name}</p>
@@ -139,8 +143,10 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {balances.suppliers.map((sup) => (
                     <div key={sup.id} className="p-3 rounded-lg bg-violet-50/50 border border-violet-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-base">{sup.type === "fragrance_oil" ? "🌺" : sup.type === "bottles" ? "🍶" : "📦"}</span>
+                      <div className="flex items-center gap-2 mb-2 text-[var(--color-text-primary)]">
+                        <span className="flex items-center justify-center w-6 h-6 text-violet-600">
+                          <PackageIcon size={16} />
+                        </span>
                         <div>
                           <p className="text-xs font-semibold text-[var(--color-text-primary)]">{sup.name}</p>
                           <p className="text-[10px] text-[var(--color-text-muted)]">{sup.sharePercent}% of raw material cost</p>
@@ -161,8 +167,14 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
       {/* GST Collection Report with Compliance Badges & XML Download */}
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">🏛️ GST Collection Report</h3>
-          <span className="compliance-badge">✓ ISO 20022 Compliant</span>
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
+            <ShieldCheckIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
+            GST Collection Report
+          </h3>
+          <span className="compliance-badge flex items-center gap-1">
+            <CheckIcon className="w-3 h-3" />
+            ISO 20022 Compliant
+          </span>
         </div>
         <div className="overflow-x-auto">
           <table className="data-table">
@@ -238,7 +250,10 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
 
       {/* Live Activity Feed */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">📡 Live Network Activity</h3>
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)] mb-4">
+          <ActivityIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
+          Live Network Activity
+        </h3>
         <LiveActivityFeed transactions={transactions} />
       </div>
     </div>
