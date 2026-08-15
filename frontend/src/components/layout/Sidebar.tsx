@@ -8,7 +8,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { RupeeIcon, ShieldIcon, TruckIcon, BellIcon, BarChartIcon, UsersIcon, PackageIcon, SettingsIcon } from "@/components/ui/Icons";
+import { RupeeIcon, ShieldIcon, TruckIcon, BellIcon, BarChartIcon, UsersIcon, PackageIcon, SettingsIcon, UserIcon, BuildingIcon } from "@/components/ui/Icons";
 
 interface SidebarProps {
   activeRole: "customer" | "seller" | "bank" | "supplier";
@@ -17,7 +17,7 @@ interface SidebarProps {
 
 const roleConfigs = {
   customer: {
-    emoji: "👤",
+    iconType: UserIcon,
     label: "Customer",
     color: "var(--color-primary)",
     items: [
@@ -25,7 +25,7 @@ const roleConfigs = {
     ],
   },
   seller: {
-    emoji: "🏪",
+    iconType: BuildingIcon,
     label: "Seller",
     color: "var(--color-accent-emerald)",
     items: [
@@ -34,7 +34,7 @@ const roleConfigs = {
     ],
   },
   bank: {
-    emoji: "🏦",
+    iconType: BuildingIcon,
     label: "Bank",
     color: "var(--color-accent-amber)",
     items: [
@@ -42,7 +42,7 @@ const roleConfigs = {
     ],
   },
   supplier: {
-    emoji: "📦",
+    iconType: PackageIcon,
     label: "Supplier",
     color: "var(--color-accent-violet)",
     items: [
@@ -76,7 +76,9 @@ export function Sidebar({ activeRole, userName }: SidebarProps) {
       {/* Role Info */}
       <div className="px-4 py-3 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-2">
-          <span className="text-lg">{config.emoji}</span>
+          <span className="text-lg text-[var(--color-text-primary)]">
+            <config.iconType size={24} />
+          </span>
           <div>
             <p className="text-xs font-medium text-[var(--color-text-primary)]">{userName}</p>
             <p className="text-[10px] text-[var(--color-text-muted)]">{config.label}</p>
