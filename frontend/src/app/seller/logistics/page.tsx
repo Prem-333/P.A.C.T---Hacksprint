@@ -30,7 +30,7 @@ export default function SellerLogisticsPage() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
-          viewTitle="📊 Logistics & Analytics"
+          viewTitle="Logistics & Analytics"
           viewDescription="Sales performance, profitability, and cash flow analysis"
           userName={user.name}
           userRole={user.role}

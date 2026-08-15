@@ -34,7 +34,7 @@ export default function BankPage() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
-          viewTitle="🏦 Bank Dashboard"
+          viewTitle="Bank Dashboard"
           viewDescription="Settlement ledger, GST reporting, and account management"
           userName={user.name}
           userRole={user.role}

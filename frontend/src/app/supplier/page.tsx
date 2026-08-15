@@ -34,7 +34,7 @@ export default function SupplierPage() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
-          viewTitle="📦 Raw Material Supplier Dashboard"
+          viewTitle="Raw Material Supplier Dashboard"
           viewDescription="Track payments received from perfume product sales"
           userName={user.name}
           userRole={user.role}
