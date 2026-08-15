@@ -6,7 +6,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { confirmDelivery, USERS, getAllEscrows, getEscrow, calculateFees, parseContractError } from "@/lib/server/wallet";
+import { confirmDelivery, USERS, getAllEscrows, getEscrow, calculateFees, parseContractError, escrowDeliveryProofs } from "@/lib/server/wallet";
 import { mapToISO20022 } from "@/lib/iso20022";
 import type { TransactionMetadata, TransactionReceipt } from "@/lib/iso20022";
 import { addTransaction } from "@/lib/server/transactions";
@@ -29,52 +29,57 @@ export async function POST() {
 
     // Confirm all pending escrows
     for (const escrow of pendingEscrows) {
-      // In our mock, deliveryProof is stored off-chain or we can just pass a dummy one for the batch settlement since it's a demo
-      const deliveryProof = `MONTHLY-BATCH-${escrow.id}`;
-      
-      const escrowBefore = await getEscrow(Number(escrow.id));
-      const feeBreakdown = await calculateFees(escrowBefore.amountRaw, escrowBefore.taxBps);
+      try {
+        // Use the original delivery proof from creation, falling back to a dummy if it was created before the server restart
+        const deliveryProof = escrowDeliveryProofs[Number(escrow.id)] || `MONTHLY-BATCH-${escrow.id}`;
+        
+        const escrowBefore = await getEscrow(Number(escrow.id));
+        const feeBreakdown = await calculateFees(escrowBefore.amountRaw, escrowBefore.taxBps);
 
-      const result = await confirmDelivery({
-        escrowId: Number(escrow.id),
-        deliveryProof,
-      });
+        const result = await confirmDelivery({
+          escrowId: Number(escrow.id),
+          deliveryProof,
+        });
 
-      totalSettled += BigInt(escrowBefore.amountRaw);
+        totalSettled += BigInt(escrowBefore.amountRaw);
 
-      // Generate ISO 20022 metadata
-      const metadata: TransactionMetadata = {
-        type: "ESCROW_CONFIRM",
-        from: USERS.customer.address,
-        to: USERS.seller.address,
-        amount: escrowBefore.amount,
-        escrowId: Number(escrow.id),
-        deliveryRef: deliveryProof,
-        remittanceInfo: `Monthly Settlement — Escrow #${escrow.id} — ₹${escrowBefore.amount} released`,
-      };
-      const receipt: TransactionReceipt = {
-        blockNumber: BigInt(result.blockNumber),
-        blockHash: "0x0" as `0x${string}`,
-        transactionIndex: 0,
-        status: "success",
-        gasUsed: BigInt(0),
-      };
-      const iso = mapToISO20022(result.txHash as `0x${string}`, receipt, metadata);
+        // Generate ISO 20022 metadata
+        const metadata: TransactionMetadata = {
+          type: "ESCROW_CONFIRM",
+          from: USERS.customer.address,
+          to: USERS.seller.address,
+          amount: escrowBefore.amount,
+          escrowId: Number(escrow.id),
+          deliveryRef: deliveryProof,
+          remittanceInfo: `Monthly Settlement — Escrow #${escrow.id} — ₹${escrowBefore.amount} released`,
+        };
+        const receipt: TransactionReceipt = {
+          blockNumber: BigInt(result.blockNumber),
+          blockHash: "0x0" as `0x${string}`,
+          transactionIndex: 0,
+          status: "success",
+          gasUsed: BigInt(0),
+        };
+        const iso = mapToISO20022(result.txHash as `0x${string}`, receipt, metadata);
 
-      addTransaction({
-        txHash: result.txHash,
-        type: "ESCROW_CONFIRM",
-        from: USERS.seller.name,
-        fromAddress: USERS.seller.address,
-        to: USERS.seller.name,
-        toAddress: USERS.seller.address,
-        amount: escrowBefore.amount,
-        blockNumber: result.blockNumber,
-        timestamp: Date.now(),
-        iso20022: iso,
-      });
+        addTransaction({
+          txHash: result.txHash,
+          type: "ESCROW_CONFIRM",
+          from: USERS.seller.name,
+          fromAddress: USERS.seller.address,
+          to: USERS.seller.name,
+          toAddress: USERS.seller.address,
+          amount: escrowBefore.amount,
+          blockNumber: result.blockNumber,
+          timestamp: Date.now(),
+          iso20022: iso,
+        });
 
-      receipts.push(result.txHash);
+        receipts.push(result.txHash);
+      } catch (err) {
+        console.warn(`Failed to settle escrow #${escrow.id}:`, err);
+        // Continue to the next escrow so one failure doesn't block the rest
+      }
     }
 
     return NextResponse.json({
