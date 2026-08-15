@@ -72,7 +72,7 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
         if (data.taxWarnings && data.taxWarnings.length > 0) {
           toast({
             type: "info",
-            message: "⚠️ Tax Guideline Update",
+            message: "️ Tax Guideline Update",
             description: data.taxWarnings[0].message.slice(0, 100) + "...",
             duration: 8000,
           });
@@ -133,7 +133,7 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
               <p className="text-xs text-[var(--color-text-muted)]">{product.name}</p>
             </div>
             <button onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] text-lg">
-              ✕
+              
             </button>
           </div>
         </div>
@@ -187,7 +187,7 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
                   onClick={() => handlePayment("gpay")}
                   className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-all group"
                 >
-                  <span className="text-2xl">📱</span>
+                  <span className="text-2xl"></span>
                   <span className="text-sm font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)]">
                     GPay (UPI)
                   </span>
@@ -197,7 +197,7 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
                   onClick={() => handlePayment("cash")}
                   className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-[var(--color-border)] hover:border-emerald-400 hover:bg-emerald-50 transition-all group"
                 >
-                  <span className="text-2xl">💵</span>
+                  <span className="text-2xl"></span>
                   <span className="text-sm font-semibold text-[var(--color-text-primary)] group-hover:text-emerald-600">
                     Cash
                   </span>
@@ -224,7 +224,7 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
           {step === "success" && result && (
             <div className="text-center py-4">
               <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">✅</span>
+                <span className="text-3xl"></span>
               </div>
               <p className="text-lg font-bold text-emerald-600 mb-1">Payment Successful!</p>
               <p className="text-sm text-[var(--color-text-primary)] font-medium mb-1">
@@ -238,7 +238,7 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
               {paymentMethod === "cash" && result.depositId && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3 text-left">
                   <p className="text-xs text-amber-700 font-medium">
-                    💡 Cash received. ₹{product.price.toLocaleString()} has been debited from the seller's bank account for digital distribution.
+                     Cash received. ₹{product.price.toLocaleString()} has been debited from the seller's bank account for digital distribution.
                   </p>
                   <p className="text-[10px] text-amber-600 mt-1">
                     Deposit ID: {result.depositId}

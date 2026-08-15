@@ -56,10 +56,10 @@ export function SettlementSankey({
     <div className="relative w-full">
       {/* Title */}
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-sm">⚡</span>
+        <span className="text-sm"></span>
         <h4 className="text-xs font-semibold text-[var(--color-text-primary)]">Atomic Settlement Flow</h4>
         <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium ml-auto">
-          ✓ Single Transaction
+           Single Transaction
         </span>
       </div>
 
@@ -166,28 +166,28 @@ export function SettlementSankey({
           {/* Node: Escrow Contract */}
           <g>
             <rect x="350" y="90" width="100" height="60" rx="10" fill="#f8fafc" stroke="#6366f1" strokeWidth="2" strokeDasharray="4 2" />
-            <text x="400" y="115" textAnchor="middle" fill="#4f46e5" fontWeight="700" fontSize="10">🔒 ESCROW</text>
+            <text x="400" y="115" textAnchor="middle" fill="#4f46e5" fontWeight="700" fontSize="10"> ESCROW</text>
             <text x="400" y="133" textAnchor="middle" fill="#6366f1" fontWeight="500" fontSize="9">Smart Contract</text>
           </g>
 
           {/* Node: Tax */}
           <g>
             <rect x="640" y="27" width="140" height="46" rx="8" fill="#fff7ed" stroke="#fed7aa" strokeWidth="1.5" />
-            <text x="710" y="46" textAnchor="middle" fill="#c2410c" fontWeight="600" fontSize="10">🏛️ {taxLabel}</text>
+            <text x="710" y="46" textAnchor="middle" fill="#c2410c" fontWeight="600" fontSize="10">️ {taxLabel}</text>
             <text x="710" y="63" textAnchor="middle" fill="#ea580c" fontWeight="700" fontSize="11">₹{taxAmount.toLocaleString()}</text>
           </g>
 
           {/* Node: Vendor */}
           <g>
             <rect x="640" y="97" width="140" height="46" rx="8" fill="#f5f3ff" stroke="#ddd6fe" strokeWidth="1.5" />
-            <text x="710" y="116" textAnchor="middle" fill="#6d28d9" fontWeight="600" fontSize="10">💎 {vendorLabel}</text>
+            <text x="710" y="116" textAnchor="middle" fill="#6d28d9" fontWeight="600" fontSize="10"> {vendorLabel}</text>
             <text x="710" y="133" textAnchor="middle" fill="#7c3aed" fontWeight="700" fontSize="11">₹{vendorAmount.toLocaleString()}</text>
           </g>
 
           {/* Node: Merchant */}
           <g>
             <rect x="640" y="167" width="140" height="46" rx="8" fill="#ecfeff" stroke="#a5f3fc" strokeWidth="1.5" />
-            <text x="710" y="186" textAnchor="middle" fill="#0e7490" fontWeight="600" fontSize="10">🏪 Merchant</text>
+            <text x="710" y="186" textAnchor="middle" fill="#0e7490" fontWeight="600" fontSize="10"> Merchant</text>
             <text x="710" y="203" textAnchor="middle" fill="#0891b2" fontWeight="700" fontSize="11">₹{merchantAmount.toLocaleString()}</text>
           </g>
         </svg>

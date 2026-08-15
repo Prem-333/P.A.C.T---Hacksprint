@@ -34,9 +34,9 @@ interface ConsensusTimelineProps {
 }
 
 const roleIcons: Record<string, string> = {
-  buyer: "👤",
-  seller: "🏪",
-  oracle: "🔗",
+  buyer: "",
+  seller: "",
+  oracle: "",
 };
 
 const roleColors: Record<string, { bg: string; border: string; text: string }> = {
@@ -59,7 +59,7 @@ export function ConsensusTimeline({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm">🔐</span>
+          <span className="text-sm"></span>
           <h4 className="text-xs font-semibold text-[var(--color-text-primary)]">
             Multi-Sig Consensus ({confirmationCount}/{threshold})
           </h4>
@@ -73,7 +73,7 @@ export function ConsensusTimeline({
               : "bg-slate-100 text-slate-500"
           }`}
         >
-          {isSettled ? "✓ Settled" : thresholdMet ? "✓ Threshold Met" : "Awaiting Votes"}
+          {isSettled ? " Settled" : thresholdMet ? " Threshold Met" : "Awaiting Votes"}
         </span>
       </div>
 
@@ -140,7 +140,7 @@ export function ConsensusTimeline({
                     : "text-slate-400"
                 }`}
               >
-                {confirmer.confirmed ? "✓ Confirmed" : "⏳ Pending"}
+                {confirmer.confirmed ? " Confirmed" : " Pending"}
               </span>
 
               {confirmer.timestamp && (
