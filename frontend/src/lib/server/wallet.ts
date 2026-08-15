@@ -387,6 +387,9 @@ export async function calculateFees(amountRaw: string, taxBps: number) {
 //  Contract Write Operations
 // ──────────────────────────────────────────────
 
+/** In-memory storage for delivery proofs so the batch settlement can retrieve them */
+export const escrowDeliveryProofs: Record<number, string> = {};
+
 /** Creates a DvP escrow (called by Customer). */
 export async function createEscrow(params: {
   sellerAddress: `0x${string}`;
@@ -423,6 +426,8 @@ export async function createEscrow(params: {
   // Since this is a simple local environment, we can just fetch nextEscrowId - 1
   const nextId = await getNextEscrowId();
   const escrowId = nextId - 1;
+
+  escrowDeliveryProofs[escrowId] = params.deliveryProof;
 
   return {
     txHash: hash,
@@ -537,6 +542,8 @@ export function parseContractError(error: any): string {
           return "Only the seller can confirm delivery.";
         case "InvalidDeliveryProof":
           return "Delivery proof does not match the expected phrase.";
+        case "AlreadyConfirmed":
+          return "This delivery has already been confirmed.";
         case "EscrowNotExpired":
           const deadline = Number((decoded as any).args?.[1]);
           const date = new Date(deadline * 1000).toLocaleString();
