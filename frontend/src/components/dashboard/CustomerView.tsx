@@ -12,6 +12,7 @@ import { Flower2, ReceiptText, ShoppingCart, FileJson } from "lucide-react";
 import { ProductCard } from "@/components/shared/ProductCard";
 import { PaymentModal } from "@/components/shared/PaymentModal";
 import { TaxWarningBanner } from "@/components/shared/TaxWarningBanner";
+import { AnimatedCounter } from "@/components/shared/AnimatedCounter";
 import type { ProductData, TaxWarningData } from "@/hooks/useDashboard";
 import type { ISO20022Message } from "@/types";
 
@@ -83,10 +84,15 @@ export function CustomerView({
             <p className="text-[11px] text-slate-500 mb-1 uppercase tracking-wider font-semibold">
               Your Wallet Balance
             </p>
-            <p className="text-[40px] font-bold text-slate-900 tracking-tight leading-none mt-2">
-              ₹{parseFloat(balance).toLocaleString()}{" "}
-              <span className="text-base text-slate-500 font-medium ml-1">INR</span>
-            </p>
+            <div className="text-[40px] font-bold text-slate-900 tracking-tight leading-none mt-2">
+              <AnimatedCounter
+                value={parseFloat(balance)}
+                prefix="₹"
+                suffix=" INR"
+                className="text-[40px] font-bold text-slate-900 tracking-tight leading-none"
+                suffixClassName="text-base text-slate-500 font-medium ml-1"
+              />
+            </div>
           </div>
           <div className="flex flex-col items-end gap-3">
             <span className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 font-medium">
@@ -222,6 +228,7 @@ export function CustomerView({
                     <div className="flex items-center gap-2 mb-3">
                       <FileJson className="w-4 h-4 text-slate-400" />
                       <span className="text-[11px] font-medium text-slate-500">ISO 20022 Transaction Log</span>
+                      <span className="compliance-badge ml-2">✓ ISO 20022</span>
                       <span className="ml-auto text-[10px] text-slate-400 font-mono px-2 py-0.5 bg-white border border-slate-100 rounded-md">
                         pacs.008.001.08
                       </span>
@@ -233,6 +240,16 @@ export function CustomerView({
                        <span className="text-[10px] px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 font-medium">
                          {order.type}
                        </span>
+                       <button
+                         onClick={() => window.open(`/api/iso20022/download?txHash=${encodeURIComponent(order.txHash)}`, "_blank")}
+                         className="btn-download"
+                         title="Download ISO 20022 XML"
+                       >
+                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                         </svg>
+                         XML
+                       </button>
                        <span className="ml-auto text-[10px] text-slate-400">
                          {new Date(order.timestamp).toLocaleTimeString()}
                        </span>

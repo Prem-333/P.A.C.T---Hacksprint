@@ -3,12 +3,14 @@
 /**
  * @module BankView
  * @description Bank dashboard — Settlement ledger, GST reporting,
- * cash deposit tracking, and all account balances.
+ * cash deposit tracking, all account balances, and the Settlement
+ * Sankey flow visualization for atomic fee distribution.
  */
 
 import { motion, AnimatePresence } from "framer-motion";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { LiveActivityFeed } from "@/components/shared/LiveActivityFeed";
+import { SettlementSankey } from "@/components/shared/SettlementSankey";
 import type { BalanceData, TransactionEntry } from "@/hooks/useDashboard";
 
 interface BankViewProps {
@@ -32,6 +34,18 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
   const cashPayments = transactions.filter((tx) => tx.metadata?.paymentMethod === "cash");
   const gpayPayments = transactions.filter((tx) => tx.metadata?.paymentMethod === "gpay");
   const totalSettled = gstTransactions.reduce((sum, tx) => sum + parseFloat(tx.amount || "0"), 0);
+
+  // Calculate settlement Sankey data from the most recent settled transaction
+  const lastSettlement = gstTransactions[0]; // newest first
+  const sankeyTotal = lastSettlement ? parseFloat(lastSettlement.amount) : 0;
+  const sankeyTax = lastSettlement?.metadata?.gstBreakdown?.total || 0;
+  const sankeyVendor = sankeyTotal * 0.01; // 1% vendor fee
+  const sankeyMerchant = sankeyTotal - sankeyTax - sankeyVendor;
+
+  /** Trigger ISO 20022 XML download for a specific transaction. */
+  const handleDownloadXml = (txHash: string) => {
+    window.open(`/api/iso20022/download?txHash=${encodeURIComponent(txHash)}`, "_blank");
+  };
 
   return (
     <div className="space-y-5">
@@ -65,6 +79,23 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
           <p className="text-2xl font-bold text-rose-500">{cashPayments.filter(tx => tx.metadata?.cashDepositPending).length}</p>
           <span className="text-[10px] text-[var(--color-text-muted)]">Awaiting seller deposit</span>
         </motion.div>
+      </motion.div>
+
+      {/* Settlement Sankey Flow Visualization */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="glass-card p-5"
+      >
+        <SettlementSankey
+          totalAmount={sankeyTotal}
+          taxAmount={sankeyTax}
+          vendorAmount={sankeyVendor}
+          merchantAmount={Math.max(0, sankeyMerchant)}
+          taxLabel={`GST ${lastSettlement?.metadata?.gstBreakdown ? `(₹${sankeyTax.toFixed(0)})` : ""}`}
+          vendorLabel="1% Platform"
+        />
       </motion.div>
 
       {/* All Accounts */}
@@ -127,9 +158,12 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
         )}
       </div>
 
-      {/* GST Collection Report */}
+      {/* GST Collection Report with Compliance Badges & XML Download */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">🏛️ GST Collection Report</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">🏛️ GST Collection Report</h3>
+          <span className="compliance-badge">✓ ISO 20022 Compliant</span>
+        </div>
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
@@ -142,6 +176,7 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
                 <th>SGST</th>
                 <th>Total GST</th>
                 <th>Time</th>
+                <th>Compliance</th>
               </tr>
             </thead>
             <motion.tbody
@@ -153,7 +188,7 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
               }}
             >
               {gstTransactions.length === 0 ? (
-                <tr><td colSpan={8} className="text-center text-[var(--color-text-muted)] py-6">No GST records yet</td></tr>
+                <tr><td colSpan={9} className="text-center text-[var(--color-text-muted)] py-6">No GST records yet</td></tr>
               ) : (
                 gstTransactions.slice(0, 20).map((tx) => (
                   <motion.tr key={tx.txHash} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
@@ -170,6 +205,18 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
                     <td className="text-orange-600 text-xs">₹{(tx.metadata?.gstBreakdown?.sgst || 0).toFixed(2)}</td>
                     <td className="font-medium text-xs">₹{(tx.metadata?.gstBreakdown?.total || 0).toFixed(2)}</td>
                     <td className="text-xs text-[var(--color-text-muted)]">{new Date(tx.timestamp).toLocaleTimeString()}</td>
+                    <td>
+                      <button
+                        onClick={() => handleDownloadXml(tx.txHash)}
+                        className="btn-download"
+                        title="Download ISO 20022 pacs.008 XML"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        XML
+                      </button>
+                    </td>
                   </motion.tr>
                 ))
               )}

@@ -9,6 +9,8 @@
 import { useState, useCallback, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TaxWarningBanner } from "@/components/shared/TaxWarningBanner";
+import { AnimatedCounter } from "@/components/shared/AnimatedCounter";
+import { ConsensusTimeline } from "@/components/shared/ConsensusTimeline";
 import { useToast } from "@/components/ui/Toast";
 import type { TaxWarningData, TransactionEntry } from "@/hooks/useDashboard";
 import { 
@@ -226,7 +228,11 @@ export function SellerView({
         <motion.div whileHover={{ y: -2 }} className="bg-white rounded-md border border-slate-200 p-5 flex flex-col justify-between shadow-sm min-h-[120px] transition-shadow hover:shadow-md">
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Settled Balance</p>
-            <p className="text-3xl font-bold text-slate-900">₹{parseFloat(balance).toLocaleString()}</p>
+            <AnimatedCounter
+              value={parseFloat(balance)}
+              prefix="₹"
+              className="text-3xl font-bold text-slate-900"
+            />
           </div>
           <div className="mt-4 flex items-center">
              <span className="flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100 font-medium w-fit">
@@ -380,6 +386,43 @@ export function SellerView({
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Multi-Sig Consensus Tracker for Pending Escrows */}
+      {pendingEscrows.length > 0 && (
+        <motion.div variants={itemVariants} className="bg-white rounded-md border border-slate-200 p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <span className="text-base">🔐</span>
+            <h3 className="text-[15px] font-bold text-slate-900">Pending Escrow Consensus</h3>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 font-semibold ml-2">
+              {pendingEscrows.length} pending
+            </span>
+          </div>
+          <div className="space-y-4">
+            {pendingEscrows.slice(0, 3).map((escrow) => {
+              const escrowId = escrow.id as number;
+              const confirmCount = (escrow.confirmationCount as number) || 0;
+              return (
+                <div key={escrowId} className="p-4 rounded-lg bg-slate-50/50 border border-slate-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-semibold text-slate-700">Escrow #{escrowId}</span>
+                    <span className="text-xs font-bold text-slate-900">₹{parseFloat(escrow.amount as string).toLocaleString()}</span>
+                  </div>
+                  <ConsensusTimeline
+                    confirmers={[
+                      { label: "Buyer", role: "buyer", confirmed: confirmCount >= 1 },
+                      { label: "Seller", role: "seller", confirmed: false },
+                      { label: "Oracle", role: "oracle", confirmed: false },
+                    ]}
+                    confirmationCount={confirmCount}
+                    threshold={2}
+                    isSettled={false}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
 
     </motion.div>
   );
