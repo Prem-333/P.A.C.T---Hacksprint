@@ -13,16 +13,32 @@ import { getTaxWarnings } from "@/lib/server/taxEngine";
 import { addTransaction } from "@/lib/server/transactions";
 import { recordSale } from "@/lib/server/analytics";
 import { mapToISO20022 } from "@/lib/iso20022";
+import { requireRole } from "@/lib/server/apiAuth";
 import type { TransactionMetadata, TransactionReceipt } from "@/lib/iso20022";
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth: only customers can make payments
+    const session = await requireRole("customer");
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { productId, quantity = 1 } = body;
 
     if (!productId) {
       return NextResponse.json(
         { error: "productId is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate quantity
+    const qty = Math.floor(Number(quantity));
+    if (!Number.isFinite(qty) || qty < 1) {
+      return NextResponse.json(
+        { error: "Quantity must be a positive integer" },
         { status: 400 }
       );
     }
@@ -35,7 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const totalAmount = product.price * quantity;
+    const totalAmount = product.price * qty;
     const gst = calculateGST(totalAmount, product.hsnCode);
     const distribution = calculateDistribution(totalAmount, product.hsnCode, product.rawMaterialBreakdown);
 
@@ -53,20 +69,28 @@ export async function POST(request: NextRequest) {
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // HACKATHON AUTOMATION: Auto-settle via Smart Contract
-    // Since this is the "Payments Automated Commerce & Tax Platform",
-    // we auto-create and auto-confirm the escrow to show instant DvP settlement.
+    // AUTOMATED DvP SETTLEMENT via Smart Contract
+    // 1. Lock funds in Escrow (Bank auto-debited for digital distribution)
+    // 2. Auto-confirm delivery → on-chain atomic distribution
+    //    → Tax to Bank, Vendor Fee to Bank, Net to Seller
+    // Note: cashDepositPending flag tracks physical cash not yet deposited
     // ─────────────────────────────────────────────────────────────────
     const taxBps = Math.round((gst.totalGST / totalAmount) * 10000);
     const deliveryProof = `AUTO-CASH-${cashResult.depositId}`;
     
-    // 1. Lock funds in Escrow
+    // Step 1: Lock funds in Escrow
     const createRes = await createEscrow({
       sellerAddress: USERS.seller.address,
       amount: totalAmount.toString(),
       lockDurationHours: 1,
       deliveryProof,
       taxBps,
+    });
+
+    // Step 2: Auto-confirm delivery (triggers on-chain distribution)
+    const confirmRes = await confirmDelivery({
+      escrowId: createRes.escrowId,
+      deliveryProof,
     });
 
     // ─────────────────────────────────────────────────────────────────
@@ -76,7 +100,7 @@ export async function POST(request: NextRequest) {
       id: `sale-${Date.now()}`,
       productId: product.id,
       productName: product.name,
-      quantity,
+      quantity: qty,
       totalAmount,
       basePrice: gst.basePrice,
       cgst: gst.cgstAmount,
@@ -89,35 +113,33 @@ export async function POST(request: NextRequest) {
       timestamp: Date.now(),
     });
 
-    const txId = `CASH-${Date.now()}`;
-
-    // Generate ISO 20022 metadata
+    // Generate ISO 20022 metadata using the on-chain tx hash
     const metadata: TransactionMetadata = {
       type: "ESCROW_CREATE",
       from: USERS.customer.address,
       to: USERS.seller.address,
       amount: totalAmount.toString(),
-      remittanceInfo: `Cash Payment — ${product.name} × ${quantity} — Deposit ID: ${cashResult.depositId}`,
+      remittanceInfo: `Cash Payment — ${product.name} × ${qty} — Deposit ID: ${cashResult.depositId} — Escrow #${createRes.escrowId} auto-settled`,
     };
     const receipt: TransactionReceipt = {
-      blockNumber: BigInt(0),
+      blockNumber: BigInt(confirmRes.blockNumber),
       blockHash: "0x0" as `0x${string}`,
       transactionIndex: 0,
       status: "success",
       gasUsed: BigInt(0),
     };
-    const iso = mapToISO20022(txId as `0x${string}`, receipt, metadata);
+    const iso = mapToISO20022(confirmRes.txHash as `0x${string}`, receipt, metadata);
 
-    // Store transaction
+    // Store transaction with on-chain hash and cash deposit pending flag
     addTransaction({
-      txHash: txId,
+      txHash: confirmRes.txHash,
       type: "CASH_PAYMENT",
       from: "Customer",
       fromAddress: USERS.customer.address,
       to: "Seller",
       toAddress: USERS.seller.address,
       amount: totalAmount.toString(),
-      blockNumber: 0,
+      blockNumber: confirmRes.blockNumber,
       timestamp: Date.now(),
       iso20022: iso,
       metadata: {
@@ -136,11 +158,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       paymentMethod: "cash",
+      transactionId: confirmRes.txHash,
       depositId: cashResult.depositId,
       bankDebitAmount: cashResult.bankDebitAmount,
+      escrowId: createRes.escrowId,
       product: {
         name: product.name,
-        quantity,
+        quantity: qty,
         unitPrice: product.price,
       },
       amount: totalAmount,
