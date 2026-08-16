@@ -36,6 +36,10 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
   const gpayPayments = transactions.filter((tx) => tx.metadata?.paymentMethod === "gpay");
   const totalSettled = gstTransactions.reduce((sum, tx) => sum + parseFloat(tx.amount || "0"), 0);
 
+  // Calculate Company Asset Balance
+  const bankUser = balances?.users?.find(u => u.role === "bank");
+  const companyAssetBalance = bankUser ? parseFloat(bankUser.balance) : 0;
+
   // Calculate settlement Sankey data from the most recent settled transaction
   const lastSettlement = gstTransactions[0]; // newest first
   const sankeyTotal = lastSettlement ? parseFloat(lastSettlement.amount) : 0;
@@ -58,8 +62,13 @@ export function BankView({ balances, escrows, transactions }: BankViewProps) {
           hidden: { opacity: 0 },
           show: { opacity: 1, transition: { staggerChildren: 0.1 } }
         }}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4"
+        className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4"
       >
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
+          <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Company Asset Balance</p>
+          <p className="text-2xl font-bold text-emerald-600">₹{companyAssetBalance.toLocaleString('en-IN')}</p>
+          <span className="text-[10px] text-[var(--color-text-muted)]">Main Account</span>
+        </motion.div>
         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="glass-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-1">Total Settled</p>
           <p className="text-2xl font-bold text-[var(--color-text-primary)]">₹{totalSettled.toLocaleString()}</p>
