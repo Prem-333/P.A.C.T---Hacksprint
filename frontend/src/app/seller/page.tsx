@@ -29,6 +29,8 @@ export default function SellerPage() {
   }
 
   const myBalance = balances?.users?.find((u) => u.username === user.username);
+  const bankUser = balances?.users?.find((u) => u.role === "bank");
+  const companyAssetBalance = bankUser ? parseFloat(bankUser.balance) : 0;
 
   const logEntries = transactions.map((tx) => ({
     txHash: tx.txHash,
@@ -59,6 +61,7 @@ export default function SellerPage() {
               <>
                 <SellerView
                   balance={myBalance?.balance || "0"}
+                  companyAssetBalance={companyAssetBalance}
                   address={user.address}
                   escrows={escrows}
                   activeEscrows={balances?.activeEscrows || 0}
