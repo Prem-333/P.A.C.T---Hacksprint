@@ -84,10 +84,9 @@ export function SellerView({
     0
   );
 
-  const totalRevenue = myEscrows.reduce(
-    (sum, e) => sum + parseFloat(e.amount as string),
-    0
-  );
+  const totalRevenue = transactions
+    .filter((tx) => tx.type === "GPAY_PAYMENT" || tx.type === "CASH_PAYMENT")
+    .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
 
   // Demo calculations for breakdown based on all-time revenue
   const platformFee = totalRevenue * (vendorFeeBps / 10000); // ~1%
