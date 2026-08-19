@@ -65,10 +65,10 @@ async function main() {
   console.log("  ✅ Minted ₹50,000 → Customer:    ", customer.address);
 
   // Mint tokens to Bank (Company) — ₹17,54,173.88
-  const bankMintAmount = ethers.parseEther("1754173.88");
+  const bankMintAmount = ethers.parseEther("62313453.13");
   const mint2 = await token.mint(bank.address, bankMintAmount);
   await mint2.wait();
-  console.log("  ✅ Minted ₹17,54,173.88 → Bank:   ", bank.address);
+  console.log("  ✅ Minted ₹6,23,13,453.13 → Bank:   ", bank.address);
 
   // Set purpose-bound restriction on Customer
   const pb1 = await token.setPurposeBound(customer.address, true);
