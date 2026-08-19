@@ -8,6 +8,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { BookOpen } from "lucide-react";
 import { RupeeIcon, ShieldIcon, TruckIcon, BellIcon, BarChartIcon, UsersIcon, PackageIcon, SettingsIcon, UserIcon, BuildingIcon } from "@/components/ui/Icons";
 
 interface SidebarProps {
@@ -31,6 +32,7 @@ const roleConfigs = {
     items: [
       { label: "Dashboard", path: "/seller", icon: RupeeIcon },
       { label: "Logistics", path: "/seller/logistics", icon: BarChartIcon },
+      { label: "Reports", path: "/seller/reports", icon: BookOpen },
     ],
   },
   bank: {
@@ -98,16 +100,20 @@ export function Sidebar({ activeRole, userName }: SidebarProps) {
             <button
               key={item.path}
               onClick={() => router.push(item.path)}
-              className={`nav-tab relative ${isActive ? "text-[var(--color-primary)]" : ""}`}
+              className={`relative flex items-center gap-3 px-3 py-2 w-full text-[13px] transition-colors rounded-lg mb-1 ${
+                isActive 
+                  ? "text-[#0a2540] font-semibold" 
+                  : "text-slate-500 font-medium hover:text-[#0a2540] hover:bg-slate-50"
+              }`}
             >
               {isActive && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute inset-0 bg-[var(--color-surface-subtle)] rounded-lg -z-10 border border-[var(--color-border)] shadow-sm"
+                  className="absolute inset-0 bg-slate-200 rounded-lg -z-10"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
-              <Icon size={16} />
+              <Icon size={16} className="relative z-10" />
               <span className="relative z-10">{item.label}</span>
             </button>
           );
