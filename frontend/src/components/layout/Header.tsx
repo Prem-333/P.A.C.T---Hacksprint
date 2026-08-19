@@ -16,8 +16,6 @@ interface HeaderProps {
   userRole: "customer" | "seller" | "bank" | "supplier";
   userAddress: string;
   onLogout: () => void;
-  activeTab?: "overview" | "analytics" | "reports";
-  onTabChange?: (tab: "overview" | "analytics" | "reports") => void;
 }
 
 export function Header({
@@ -27,8 +25,6 @@ export function Header({
   userRole,
   userAddress,
   onLogout,
-  activeTab = "overview",
-  onTabChange,
 }: HeaderProps) {
   // Strip emojis from viewTitle if any are passed
   const cleanTitle = viewTitle.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
@@ -44,38 +40,6 @@ export function Header({
             {cleanTitle}
           </span>
         </div>
-        <nav className="flex items-center gap-6 text-[13px] h-full">
-          <button 
-            onClick={() => onTabChange?.("overview")}
-            className={`h-full flex items-center px-1 transition-colors ${
-              activeTab === "overview" 
-                ? "text-[#0c6a54] font-semibold border-b-[3px] border-[#0c6a54]" 
-                : "text-slate-500 font-medium hover:text-slate-900 border-b-[3px] border-transparent"
-            }`}
-          >
-            Overview
-          </button>
-          <button 
-            onClick={() => onTabChange?.("analytics")}
-            className={`h-full flex items-center px-1 transition-colors ${
-              activeTab === "analytics" 
-                ? "text-[#0c6a54] font-semibold border-b-[3px] border-[#0c6a54]" 
-                : "text-slate-500 font-medium hover:text-slate-900 border-b-[3px] border-transparent"
-            }`}
-          >
-            Analytics
-          </button>
-          <button 
-            onClick={() => onTabChange?.("reports")}
-            className={`h-full flex items-center px-1 transition-colors ${
-              activeTab === "reports" 
-                ? "text-[#0c6a54] font-semibold border-b-[3px] border-[#0c6a54]" 
-                : "text-slate-500 font-medium hover:text-slate-900 border-b-[3px] border-transparent"
-            }`}
-          >
-            Reports
-          </button>
-        </nav>
       </div>
 
       {/* Right: User Info + Logout */}
