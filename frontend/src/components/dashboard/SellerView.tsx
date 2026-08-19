@@ -13,6 +13,7 @@ import { AnimatedCounter } from "@/components/shared/AnimatedCounter";
 import { ConsensusTimeline } from "@/components/shared/ConsensusTimeline";
 import { useToast } from "@/components/ui/Toast";
 import type { TaxWarningData, TransactionEntry } from "@/hooks/useDashboard";
+import type { AnalyticsData } from "@/types";
 import { 
   Smartphone, 
   Banknote, 
@@ -26,6 +27,7 @@ import {
 } from "lucide-react";
 
 interface SellerViewProps {
+  analyticsData?: AnalyticsData | null;
   balance: string;
   companyAssetBalance: number;
   address: string;
@@ -39,6 +41,7 @@ interface SellerViewProps {
 }
 
 export function SellerView({
+  analyticsData,
   balance,
   companyAssetBalance,
   address,
@@ -84,19 +87,21 @@ export function SellerView({
     0
   );
 
-  const totalRevenue = transactions
+  const totalRevenue = analyticsData?.totalRevenue || transactions
     .filter((tx) => tx.type === "GPAY_PAYMENT" || tx.type === "CASH_PAYMENT")
     .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
 
-  // Demo calculations for breakdown based on all-time revenue
-  const platformFee = totalRevenue * (vendorFeeBps / 10000); // ~1%
-  const taxAmount = totalRevenue * 0.1525; // derived average GST for demo
-  const supplierAmount = totalRevenue * 0.10; // supplier payments
+  // Use analytics data for breakdown if available to coordinate with logistics/reports
+  const platformFee = totalRevenue * (vendorFeeBps / 10000); 
+  const taxAmount = analyticsData?.gstCollected?.total || totalRevenue * 0.1525;
+  const supplierAmount = analyticsData?.supplierPayments?.reduce((sum, s) => sum + s.total, 0) || totalRevenue * 0.10;
   const totalDistributed = platformFee + taxAmount + supplierAmount;
-  const netProfit = totalRevenue - totalDistributed;
+  const netProfit = analyticsData?.totalProfit || (totalRevenue - totalDistributed);
 
   const effectiveBalance = parseFloat(balance) - pendingCashAmount;
   const isUsingCompanyFunds = effectiveBalance < 0;
+  
+  const todaySales = analyticsData?.totalRevenue || effectiveBalance;
 
   const [isSettling, setIsSettling] = useState(false);
   const [isDepositing, setIsDepositing] = useState(false);
@@ -202,9 +207,9 @@ export function SellerView({
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Total Settled Balance */}
         <motion.div whileHover={{ y: -2 }} className={`bg-white rounded-xl border ${isUsingCompanyFunds ? 'border-red-200/60' : 'border-slate-200/80'} p-5 shadow-sm transition-shadow hover:shadow-md`}>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">Your Balance</p>
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">Today Sales</p>
           <div className={`text-2xl font-bold ${isUsingCompanyFunds ? 'text-red-600' : 'text-slate-800'}`}>
-            <AnimatedCounter value={effectiveBalance} prefix="₹" />
+            ₹{todaySales.toLocaleString('en-IN')}
           </div>
           <div className="mt-4">
             <span className="flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100/60 font-medium w-fit">

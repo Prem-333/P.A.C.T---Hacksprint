@@ -159,11 +159,14 @@ interface MetricCardProps {
 
 export function MetricCard({ label, value, subValue, icon, trend, trendValue, color }: MetricCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 hover:shadow-sm transition-shadow">
-      <div className="flex items-start justify-between mb-2">
-        <span className="text-xl">{icon}</span>
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 hover:shadow-sm transition-shadow flex flex-col h-full">
+      <div className="flex items-start justify-between mb-2 min-h-[24px]">
+        <p className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5 mt-0.5">
+          {icon && <span className="text-base leading-none">{icon}</span>}
+          {label}
+        </p>
         {trend && trendValue && (
-          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
             trend === "up" ? "bg-emerald-50 text-emerald-600" :
             trend === "down" ? "bg-rose-50 text-rose-600" :
             "bg-gray-50 text-gray-600"
@@ -172,12 +175,11 @@ export function MetricCard({ label, value, subValue, icon, trend, trendValue, co
           </span>
         )}
       </div>
-      <p className="text-xs text-[var(--color-text-muted)] mb-0.5">{label}</p>
       <p className={`text-xl font-bold ${color || "text-[var(--color-text-primary)]"}`}>
         {value}
       </p>
       {subValue && (
-        <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">{subValue}</p>
+        <p className="text-[10px] text-[var(--color-text-muted)] mt-1">{subValue}</p>
       )}
     </div>
   );
