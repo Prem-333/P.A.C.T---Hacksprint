@@ -49,10 +49,6 @@ export default function SupplierPage() {
               transactions={transactions}
             />
           </div>
-
-          <div className="border-t border-[var(--color-border)] pt-6">
-            <TransactionLog entries={logEntries} />
-          </div>
         </main>
       </div>
     </div>
