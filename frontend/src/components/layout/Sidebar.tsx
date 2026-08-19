@@ -40,7 +40,9 @@ const roleConfigs = {
     label: "Bank",
     color: "var(--color-accent-amber)",
     items: [
-      { label: "Ledger & GST", path: "/bank", icon: ShieldIcon },
+      { label: "Dashboard", path: "/bank", icon: RupeeIcon },
+      { label: "Ledger", path: "/bank/ledger", icon: BookOpen },
+      { label: "GST", path: "/bank/gst", icon: ShieldIcon },
     ],
   },
   supplier: {
@@ -48,7 +50,8 @@ const roleConfigs = {
     label: "Supplier",
     color: "var(--color-accent-violet)",
     items: [
-      { label: "Payments", path: "/supplier", icon: PackageIcon },
+      { label: "Dashboard", path: "/supplier", icon: RupeeIcon },
+      { label: "Payments", path: "/supplier/payments", icon: PackageIcon },
     ],
   },
 };

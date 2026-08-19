@@ -1,21 +1,20 @@
 "use client";
 
 /**
- * @module BankPage
- * @description Bank dashboard page — settlement ledger, GST reporting, all accounts.
+ * @module BankLedgerPage
+ * @description Bank ledger page — settlement transaction log with ISO 20022 compliance.
  */
 
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
-import { BankView } from "@/components/dashboard/BankView";
 import { TransactionLog } from "@/components/shared/TransactionLog";
 import { useDashboard } from "@/hooks/useDashboard";
 import type { ISO20022Message } from "@/types";
 
 import { DashboardSkeleton } from "@/components/shared/DashboardSkeleton";
 
-export default function BankPage() {
-  const { user, balances, escrows, transactions, isLoading, handleLogout } = useDashboard("bank");
+export default function BankLedgerPage() {
+  const { user, transactions, isLoading, handleLogout } = useDashboard("bank");
 
   if (isLoading || !user) {
     return <DashboardSkeleton />;
@@ -34,8 +33,8 @@ export default function BankPage() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
-          viewTitle="Bank Dashboard"
-          viewDescription="Settlement ledger, GST reporting, and account management"
+          viewTitle="Settlement Ledger"
+          viewDescription="All blockchain-verified settlement transactions"
           userName={user.name}
           userRole={user.role}
           userAddress={user.address}
@@ -44,11 +43,7 @@ export default function BankPage() {
 
         <main className="flex-1 overflow-y-auto p-6 space-y-6">
           <div className="animate-fade-in">
-            <BankView
-              balances={balances}
-              escrows={escrows}
-              transactions={transactions}
-            />
+            <TransactionLog entries={logEntries} />
           </div>
         </main>
       </div>
