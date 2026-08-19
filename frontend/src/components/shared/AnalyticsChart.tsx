@@ -61,25 +61,30 @@ export function CashFlowChart({ data, height = 160 }: CashFlowChartProps) {
   );
 
   return (
-    <div className="w-full" style={{ height }}>
-      <div className="flex items-end justify-between gap-2 h-full">
+    <div className="w-full overflow-visible" style={{ height }}>
+      <div className="flex items-end justify-between gap-2 h-full overflow-visible">
         {data.map((d, i) => {
           const inflowH = (d.inflow / maxValue) * 100;
           const outflowH = (d.outflow / maxValue) * 100;
           return (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end group">
-              <div className="flex gap-0.5 items-end h-full w-full">
-                {/* Inflow bar */}
+            <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end group overflow-visible">
+              {/* Tooltip — in normal flow, sits right above bars */}
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-medium bg-white shadow-sm border border-[var(--color-border)] rounded px-1.5 py-0.5 whitespace-nowrap flex flex-col items-center">
+                <span className="text-emerald-600">In: ₹{d.inflow.toLocaleString()}</span>
+                <span className="text-rose-600">Out: ₹{d.outflow.toLocaleString()}</span>
+              </div>
+              {/* Bar pair */}
+              <div className="flex gap-0.5 items-end w-full" style={{ height: `${Math.max(inflowH, outflowH, 2)}%` }}>
                 <div
-                  className="flex-1 rounded-t-sm bg-emerald-400 transition-all duration-500"
-                  style={{ height: `${Math.max(inflowH, 2)}%` }}
+                  className="flex-1 rounded-t-sm bg-emerald-400 transition-all duration-500 group-hover:opacity-80"
+                  style={{ height: `${(Math.max(inflowH, 2) / Math.max(inflowH, outflowH, 2)) * 100}%` }}
                 />
-                {/* Outflow bar */}
                 <div
-                  className="flex-1 rounded-t-sm bg-rose-400 transition-all duration-500"
-                  style={{ height: `${Math.max(outflowH, 2)}%` }}
+                  className="flex-1 rounded-t-sm bg-rose-400 transition-all duration-500 group-hover:opacity-80"
+                  style={{ height: `${(Math.max(outflowH, 2) / Math.max(inflowH, outflowH, 2)) * 100}%` }}
                 />
               </div>
+              {/* Label */}
               <span className="text-[9px] text-[var(--color-text-muted)] truncate w-full text-center">
                 {d.label}
               </span>
