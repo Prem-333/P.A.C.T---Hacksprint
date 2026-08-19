@@ -157,7 +157,11 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">Distribution Preview</p>
                 <div className="flex justify-between text-xs">
                   <span className="text-[var(--color-text-secondary)]">Base Price</span>
-                  <span className="font-medium">₹{product.gstBreakdown.basePrice.toFixed(2)}</span>
+                  <span className="font-medium">₹{(product.price - product.gstBreakdown.cgstAmount - product.gstBreakdown.sgstAmount - product.distribution.platformFee).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-violet-600">
+                  <span>Platform Fee</span>
+                  <span>₹{product.distribution.platformFee.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-amber-600">
                   <span>CGST ({product.gstBreakdown.cgstRate}%)</span>
@@ -167,17 +171,9 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
                   <span>SGST ({product.gstBreakdown.sgstRate}%)</span>
                   <span>₹{product.gstBreakdown.sgstAmount.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-xs text-violet-600">
-                  <span>Platform Fee</span>
-                  <span>₹{product.distribution.platformFee.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-xs text-emerald-600">
-                  <span>Raw Materials</span>
-                  <span>₹{product.distribution.rawMaterialTotal.toFixed(2)}</span>
-                </div>
-                <div className="border-t border-[var(--color-border)] pt-2 flex justify-between text-xs font-semibold text-[var(--color-primary)]">
-                  <span>Seller Margin</span>
-                  <span>₹{product.distribution.sellerMargin.toFixed(2)}</span>
+                <div className="border-t border-[var(--color-border)] pt-2 flex justify-between text-xs font-bold text-[var(--color-text-primary)]">
+                  <span>Total</span>
+                  <span>₹{product.price.toFixed(2)}</span>
                 </div>
               </div>
 

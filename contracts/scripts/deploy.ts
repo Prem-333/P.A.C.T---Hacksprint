@@ -64,7 +64,13 @@ async function main() {
   await mint1.wait();
   console.log("  ✅ Minted ₹50,000 → Customer:    ", customer.address);
 
-  // Mint tokens to Bank (Company) — ₹17,54,173.88
+  // Mint tokens to Seller (Merchant) — ₹17,54,173.88
+  const sellerMintAmount = ethers.parseEther("1754173.88");
+  const mintSeller = await token.mint(seller.address, sellerMintAmount);
+  await mintSeller.wait();
+  console.log("  ✅ Minted ₹17,54,173.88 → Seller: ", seller.address);
+
+  // Mint tokens to Bank (Company) — ₹6,23,13,453.13
   const bankMintAmount = ethers.parseEther("62313453.13");
   const mint2 = await token.mint(bank.address, bankMintAmount);
   await mint2.wait();

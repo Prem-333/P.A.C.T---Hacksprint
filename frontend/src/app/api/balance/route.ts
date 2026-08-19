@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const [totalSupply, activeEscrows] = await Promise.all([
-      getTotalSupply().catch(() => "62363453.13"),
+      getTotalSupply().catch(() => "64117627.01"),
       getActiveEscrowCount().catch(() => 0),
     ]);
 
@@ -28,6 +28,7 @@ export async function GET() {
         const [balance, isPurposeBound] = await Promise.all([
           getBalance(user.address).catch(() => {
             if (user.role === "customer") return "50000.0";
+            if (user.role === "seller") return "1754173.88";
             if (user.role === "bank") return "62313453.13";
             return "0.0";
           }),
